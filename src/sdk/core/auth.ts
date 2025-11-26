@@ -46,7 +46,7 @@ interface AuthStore extends AuthState {
 }
 
 // Configuration for token validation
-const API_BASE_URL = import.meta.env.VITE_API_BASE_PATH;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
  * Zustand store for authentication state management
@@ -80,7 +80,7 @@ const useAuthStore = create<AuthStore>(
 			}
 
 			try {
-				const response = await fetch(`${API_BASE_URL}/me`, {
+				const response = await fetch(`${API_BASE_URL}/auth/me`, {
 					method: "GET",
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -449,4 +449,43 @@ export async function clearAuth(): Promise<void> {
  */
 export async function refreshAuth(): Promise<boolean> {
 	return useAuthStore.getState().refreshAuth();
+}
+
+/**
+ * Login helper for forms: POST /auth/login to backend and set token in store
+ * Returns the `user` object from the backend on success.
+ */
+export async function loginWithCredentials(
+	emailOrUsername: string,
+	password: string,
+) {
+	// Top-level API_BASE_URL is defined at the top of this file.
+	if (!API_BASE_URL) {
+		throw new Error("API_BASE_URL is not configured for login");
+	}
+
+	const res = await fetch(`${API_BASE_URL}/auth/login`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ emailOrUsername, password }),
+	});
+
+	if (!res.ok) {
+		const data = await res.json().catch(() => ({} as any));
+		throw new Error(data?.error || "Login failed");
+	}
+
+	const data = await res.json();
+
+	// Expected shape: { token, user }
+	const { token, user } = data as { token?: string; user?: any };
+
+	if (!token) throw new Error("Login response did not include a token");
+
+	const { setToken } = useAuthStore.getState();
+	await setToken(token);
+
+	return user;
 }
