@@ -1,15 +1,19 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { type UserModel } from '@/components/data/orm/orm_user';
+import { saveAuthToken, getAuthToken } from '@/lib/api';
 
 interface UserContextType {
   currentUser: UserModel | null;
   setCurrentUser: (user: UserModel | null, rememberMe?: boolean) => void;
   logout: () => void;
+  token: string | null;
+  setAuthToken: (token: string | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'verrocchio_user';
+const TOKEN_KEY = 'verrocchio_auth_token';
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUserState] = useState<UserModel | null>(() => {
@@ -24,6 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
     return null;
   });
+  const [token, setToken] = useState<string | null>(() => getAuthToken());
 
   const setCurrentUser = (user: UserModel | null, rememberMe = false) => {
     setCurrentUserState(user);
@@ -47,10 +52,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null);
+    setToken(null);
+    saveAuthToken(null);
+  };
+
+  const setAuthToken = (value: string | null) => {
+    setToken(value);
+    saveAuthToken(value);
   };
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser, logout }}>
+    <UserContext.Provider value={{ currentUser, setCurrentUser, logout, token, setAuthToken }}>
       {children}
     </UserContext.Provider>
   );

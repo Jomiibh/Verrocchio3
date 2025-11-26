@@ -1,7 +1,7 @@
 import { getAuthTokenAsync } from "./auth";
 import { reportToParentWindow } from "./internal/creao-shell";
 
-const API_BASE_PATH = import.meta.env.VITE_MCP_API_BASE_PATH;
+const API_BASE_PATH = import.meta.env.VITE_MCP_API_BASE_PATH || import.meta.env.VITE_API_BASE_URL;
 
 /**
  * a simple wrapper for `fetch` with authentication token and error handling

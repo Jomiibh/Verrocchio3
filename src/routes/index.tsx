@@ -25,6 +25,7 @@ import { CommissionRequestORM, type CommissionRequestModel } from "@/components/
 import { ConversationORM, type ConversationModel } from "@/components/data/orm/orm_conversation";
 import { useCreaoFileUpload } from "@/hooks/use-creao-file-upload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { loginApi, registerApi, saveAuthToken } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -1754,7 +1755,7 @@ function AuthDialog({ onClose }: { onClose: () => void }) {
 }
 
 function LoginForm({ onClose }: { onClose: () => void }) {
-  const { setCurrentUser } = useUser();
+  const { setCurrentUser, setAuthToken } = useUser();
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -1763,26 +1764,27 @@ function LoginForm({ onClose }: { onClose: () => void }) {
 
   const loginMutation = useMutation({
     mutationFn: async () => {
-      const userOrm = UserORM.getInstance();
-
-      let users = await userOrm.getUserByEmail(emailOrUsername);
-      if (users.length === 0) {
-        users = await userOrm.getUserByUsername(emailOrUsername);
-      }
-
-      if (users.length === 0) {
-        throw new Error("User not found");
-      }
-
-      const user = users[0];
-
-      if (user.password_hash !== password) {
-        throw new Error("Invalid password");
-      }
-
-      return user;
+      const result = await loginApi(emailOrUsername, password);
+      return result;
     },
-    onSuccess: (user) => {
+    onSuccess: (res) => {
+      const user: UserModel = {
+        id: res.user.id,
+        display_name: res.user.display_name || res.user.username,
+        avatar_url: res.user.avatar_url || null,
+        role: res.user.role ?? 0,
+        email: res.user.email,
+        username: res.user.username,
+        password_hash: "",
+        data_creator: "",
+        data_updater: "",
+        create_time: "",
+        update_time: "",
+      };
+      if (rememberMe) {
+        saveAuthToken(res.token);
+      }
+      setAuthToken(res.token);
       setCurrentUser(user, rememberMe);
       onClose();
     },
@@ -1856,7 +1858,7 @@ function LoginForm({ onClose }: { onClose: () => void }) {
 }
 
 function SignupForm({ onClose }: { onClose: () => void }) {
-  const { setCurrentUser } = useUser();
+  const { setCurrentUser, setAuthToken } = useUser();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -1871,44 +1873,34 @@ function SignupForm({ onClose }: { onClose: () => void }) {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
-      const userOrm = UserORM.getInstance();
-
-      const existingByEmail = await userOrm.getUserByEmail(email);
-      if (existingByEmail.length > 0) {
-        throw new Error("Email already exists");
-      }
-
-      const existingByUsername = await userOrm.getUserByUsername(username);
-      if (existingByUsername.length > 0) {
-        throw new Error("Username already exists");
-      }
-
-      const users = await userOrm.insertUser([{
-        display_name: displayName,
-        avatar_url: avatarUrl || null,
-        role,
+      const result = await registerApi({
         email,
         username,
-        password_hash: password,
-      } as any]);
-      return users[0];
+        password,
+        display_name: displayName,
+        role: role === UserRole.Artist ? "artist" : "buyer",
+        avatar_url: avatarUrl || null,
+      });
+      return result;
     },
-    onSuccess: async (user) => {
-      if (role === UserRole.Artist) {
-        const artistOrm = ArtistProfileORM.getInstance();
-        await artistOrm.insertArtistProfile([{
-          user_id: user.id,
-          completed_work_count: 0,
-          likes_count: 0,
-          price_range_min: 0,
-          price_range_max: 1000,
-        } as any]);
-      } else {
-        const buyerOrm = BuyerProfileORM.getInstance();
-        await buyerOrm.insertBuyerProfile([{
-          user_id: user.id,
-        } as any]);
+    onSuccess: async (res) => {
+      const user: UserModel = {
+        id: res.user.id,
+        display_name: res.user.display_name || res.user.username,
+        avatar_url: res.user.avatar_url || null,
+        role: res.user.role ?? 0,
+        email: res.user.email,
+        username: res.user.username,
+        password_hash: "",
+        data_creator: "",
+        data_updater: "",
+        create_time: "",
+        update_time: "",
+      };
+      if (rememberMe) {
+        saveAuthToken(res.token);
       }
+      setAuthToken(res.token);
       setCurrentUser(user, rememberMe);
       queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
       onClose();

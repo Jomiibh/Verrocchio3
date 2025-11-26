@@ -29,12 +29,12 @@ const UserSchema = new mongoose.Schema(
     },
     email: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
-    displayName: String,
-    passwordHash: { type: String, required: true },
+    display_name: { type: String, default: "" },
+    password_hash: { type: String, required: true },
 
     bio: { type: String, default: "" },
-    avatarUrl: String,
-    bannerUrl: String,
+    avatar_url: String,
+    banner_url: String,
 
     artStyles: [String], // e.g. ["nsfw", "furry"]
     priceMin: Number,
