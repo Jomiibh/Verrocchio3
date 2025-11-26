@@ -13,9 +13,14 @@ import notificationRoutes from "./routes/notifications.js";
 
 const app = express();
 
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*",
     credentials: true
   })
 );
