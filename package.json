@@ -9,14 +9,14 @@
     "serve": "vite preview",
     "test": "vitest run",
     "check": "tsgo --noEmit && npm run lint:radix -- --fix && npm run format",
-    "check:safe": "timeout 20 npm run check || (echo 'Check timed out after 20 seconds' && exit 1)",
+    "check:safe": "node config/check-safe.mjs",
     "format": "biome check --write --unsafe",
     "format:quiet": "biome check --write --unsafe --log-level=warn",
-    "lint:radix": "grep -l -r '<SelectItem' src | xargs eslint --config config/eslint/eslint.radix.config.js",
+    "lint:radix": "node config/lint-radix.mjs",
     "lint:mcp": "eslint src --config config/eslint/eslint.mcp.config.js",
     "lint:validate": "node config/eslint/validate-configs.js",
     "reset-data": "tsx reset-data.ts",
-    "prepare": "if [ -f ./bin/setup-githooks.sh ]; then ./bin/setup-githooks.sh; fi"
+    "prepare": "node config/setup-githooks.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -90,6 +90,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/lodash": "^4.17.20",
+    "@types/node": "^24.10.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
