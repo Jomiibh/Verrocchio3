@@ -1,0 +1,138 @@
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ACTIVATE_OR_MODIFY_DO_NOT_DISTURB_DURATION
+
+Here is the input and output schema info of Tool SLACK_ACTIVATE_OR_MODIFY_DO_NOT_DISTURB_DURATION of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"num_minutes":{"type":"string","description":"Number of minutes, from now, to snooze until.","title":"Num Minutes","examples":["60"]}},"required":["num_minutes"],"title":"SetDndDurationRequest","description":"Request schema for `SetDndDuration`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Response data","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"SetDndDurationResponseWrapper"}
+schema info of SLACK_ACTIVATE_OR_MODIFY_DO_NOT_DISTURB_DURATION ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_A_CUSTOM_EMOJI_TO_A_SLACK_TEAM
+
+Here is the input and output schema info of Tool SLACK_ADD_A_CUSTOM_EMOJI_TO_A_SLACK_TEAM of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"name":{"type":"string","description":"The desired name for the new custom emoji. This name will be used to invoke the emoji (e.g., if name is 'partyparrot', it's used as ':partyparrot:'). Colons around the name are not required when providing this field.","title":"Name","examples":["partyparrot","approved_stamp","team_logo_small"]},"token":{"type":"string","description":"Authentication token used to authorize the request to add a custom emoji to the Slack workspace.","title":"Token"},"url":{"type":"string","description":"The URL of the image file to be used as the custom emoji. The image should be accessible via HTTP/HTTPS and meet Slack's emoji requirements (e.g., size, format). Supported formats typically include PNG, GIF, and JPEG.","title":"Url","examples":["https://example.com/emoji/partyparrot.gif","https://cdn.example.com/images/approved_stamp.png"]}},"required":["name","token","url"],"title":"AddEmojiRequest","description":"Request schema for `AddEmoji`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"The response data confirming the successful addition of the custom emoji.","title":"Data","properties":{"ok":{"type":"boolean","description":"Indicates if the request was successful. Always `true` on success.","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":true},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddEmojiResponseWrapper"}
+schema info of SLACK_ADD_A_CUSTOM_EMOJI_TO_A_SLACK_TEAM ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_AN_EMOJI_ALIAS_IN_SLACK
+
+Here is the input and output schema info of Tool SLACK_ADD_AN_EMOJI_ALIAS_IN_SLACK of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"alias_for":{"type":"string","description":"The canonical name of the existing custom emoji (e.g., `original_emoji`).","title":"Alias For","examples":["party_parrot","approved_stamp"]},"name":{"type":"string","description":"The new alias to be created for the emoji specified in `alias_for` (e.g., `new_emoji_alias`). Colons around the name (e.g., `:my_alias:`) are optional and will be automatically trimmed, along with any leading/trailing whitespace.","title":"Name","examples":["parrot_alias",":approved_alias:"]},"token":{"type":"string","description":"Authentication token. Requires the `admin.teams:write` scope.","title":"Token"}},"required":["alias_for","name","token"],"title":"AddAnEmojiAliasInSlackRequest","description":"Request schema for `AddAnEmojiAliasInSlack`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"The structured response from the API. It typically contains an `ok` field which is `true` if the alias was added successfully.","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":true},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddAnEmojiAliasInSlackResponseWrapper"}
+schema info of SLACK_ADD_AN_EMOJI_ALIAS_IN_SLACK ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_A_REMOTE_FILE_FROM_A_SERVICE
+
+Here is the input and output schema info of Tool SLACK_ADD_A_REMOTE_FILE_FROM_A_SERVICE of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"external_id":{"type":"string","description":"Unique identifier for the file, defined by the calling application, used for future API references (e.g., updating, deleting).","title":"External Id","examples":["file-abc-123-xyz-789","guid-document-42"]},"external_url":{"type":"string","description":"Publicly accessible or permissioned URL of the remote file, used by Slack to access its content or metadata.","title":"External Url","examples":["https://example.com/path/to/your/file.pdf","https://your-service.com/files/unique-id-123"]},"filetype":{"type":"string","description":"File type (e.g., 'pdf', 'docx', 'png') to help Slack display appropriate icons or previews.","title":"Filetype","examples":["pdf","docx","gdoc","png","txt","gsheet"]},"indexable_file_contents":{"type":"string","description":"Plain text content of the file, indexed by Slack for search.","title":"Indexable File Contents","examples":["This document contains project plans for Q4, focusing on market expansion and new product development.","Meeting notes from Q1 review: Key discussion points included budget allocation, resource management, and upcoming deadlines."]},"preview_image":{"type":"string","description":"Base64-encoded image (e.g., PNG, JPEG) used as the file's preview in Slack.","title":"Preview Image","examples":["(base64 encoded PNG data of a chart)","(base64 encoded JPEG data of a document cover)"]},"title":{"type":"string","description":"Title of the remote file to be displayed in Slack.","title":"Title","examples":["Project Proposal Q3.docx","Client Onboarding Checklist.pdf"]},"token":{"type":"string","description":"Slack authentication token, required to authorize adding the remote file.","title":"Token","examples":["xoxp-123456789012-123456789012-1234567890123-abcdefghijklmnopqrstuvwxyz123456"]}},"title":"AddARemoteFileFromAServiceRequest","description":"Request schema for adding a remote file to Slack."}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Contains a confirmation object indicating the success of the file addition.","title":"Data","properties":{"ok":{"type":"boolean","description":"Indicates if the operation was successful; always `True` on success.","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":true},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddARemoteFileFromAServiceResponseWrapper"}
+schema info of SLACK_ADD_A_REMOTE_FILE_FROM_A_SERVICE ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_A_STAR_TO_AN_ITEM
+
+Here is the input and output schema info of Tool SLACK_ADD_A_STAR_TO_AN_ITEM of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"channel":{"type":"string","description":"ID of the channel to star. If starring a specific message, this is the ID of the channel containing the message, and `timestamp` must also be provided.","title":"Channel","examples":["C1234567890","G0123456789"]},"file":{"type":"string","description":"ID of the file to add a star to.","title":"File","examples":["F1234567890","F0987654321"]},"file_comment":{"type":"string","description":"ID of the file comment to add a star to.","title":"File Comment","examples":["Fc1234567890","Fc0987654321"]},"timestamp":{"type":"string","description":"Timestamp of the message to add a star to. This uniquely identifies the message within the specified `channel`. Requires `channel` to also be provided.","title":"Timestamp","examples":["1234567890.123456","1678886400.000100"]}},"title":"AddAStarToAnItemRequest","description":"Request schema for the `stars.add` API method. Used to add a star to a channel, file, file comment, or a specific message. Exactly one type of item must be targeted per request."}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Contains the API call's success status. The `ok` field within this model will be `True` if the star was added.","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddAStarToAnItemResponseWrapper"}
+schema info of SLACK_ADD_A_STAR_TO_AN_ITEM ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_CALL_PARTICIPANTS
+
+Here is the input and output schema info of Tool SLACK_ADD_CALL_PARTICIPANTS of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"id":{"type":"string","description":"ID of the call returned by the add method.","title":"Id","examples":["R0123456789"]},"users":{"type":"string","description":"The list of users to add as participants in the call. users is a JSON array (formatted as a string) containing information for each user. Each element should include both a `slack_id` and optionally an `external_id`. For example: `[{\"slack_id\": \"U1H77\", \"external_id\": \"ext-id\"}]`.","title":"Users","examples":["[{\"slack_id\": \"U1H77\", \"external_id\": \"ext-id\"}]","[{\"slack_id\": \"U2ABC123\"}]"]}},"required":["id","users"],"title":"AddCallParticipantsRequest","description":"Request schema for `AddCallParticipants`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Response data","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddCallParticipantsResponseWrapper"}
+schema info of SLACK_ADD_CALL_PARTICIPANTS ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_EMOJI
+
+Here is the input and output schema info of Tool SLACK_ADD_EMOJI of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"name":{"type":"string","description":"The desired name for the new custom emoji. This name will be used to invoke the emoji (e.g., if name is 'partyparrot', it's used as ':partyparrot:'). Colons around the name are not required when providing this field.","title":"Name","examples":["partyparrot","approved_stamp","team_logo_small"]},"token":{"type":"string","description":"Authentication token used to authorize the request to add a custom emoji to the Slack workspace.","title":"Token"},"url":{"type":"string","description":"The URL of the image file to be used as the custom emoji. The image should be accessible via HTTP/HTTPS and meet Slack's emoji requirements (e.g., size, format). Supported formats typically include PNG, GIF, and JPEG.","title":"Url","examples":["https://example.com/emoji/partyparrot.gif","https://cdn.example.com/images/approved_stamp.png"]}},"required":["name","token","url"],"title":"AddEmojiRequest","description":"Request schema for `AddEmoji`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"The response data confirming the successful addition of the custom emoji.","title":"Data","properties":{"ok":{"type":"boolean","description":"Indicates if the request was successful. Always `true` on success.","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":true},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddEmojiResponseWrapper"}
+schema info of SLACK_ADD_EMOJI ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ADD_REACTION_TO_AN_ITEM
+
+Here is the input and output schema info of Tool SLACK_ADD_REACTION_TO_AN_ITEM of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"channel":{"type":"string","description":"ID of the channel where the message to add the reaction to was posted.","title":"Channel","examples":["C1234567890","G0987654321"]},"name":{"type":"string","description":"Name of the emoji to add as a reaction (e.g., 'thumbsup'). This is the emoji name without colons. For emojis with skin tone modifiers, append '::skin-tone-X' where X is a number from 2 to 6 (e.g., 'wave::skin-tone-3').","title":"Name","examples":["thumbsup","grinning","robot_face","wave::skin-tone-3"]},"timestamp":{"type":"string","description":"Timestamp of the message to which the reaction will be added. This is a unique identifier for the message, typically a string representing a float value like '1234567890.123456'.","title":"Timestamp","examples":["1234567890.123456","1609459200.000200"]}},"required":["channel","name","timestamp"],"title":"AddReactionToAnItemRequest","description":"Request schema for `AddReactionToAnItem`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Wrapper for the response data, indicating the outcome of the add reaction operation.","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"AddReactionToAnItemResponseWrapper"}
+schema info of SLACK_ADD_REACTION_TO_AN_ITEM ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ARCHIVE_A_PUBLIC_OR_PRIVATE_CHANNEL
+
+Here is the input and output schema info of Tool SLACK_ARCHIVE_A_PUBLIC_OR_PRIVATE_CHANNEL of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"channel_id":{"type":"string","description":"ID of the public or private Slack channel to archive.","title":"Channel Id","examples":["C1234567890"]}},"required":["channel_id"],"title":"ArchiveAPublicOrPrivateChannelRequest","description":"Request schema for `ArchiveAPublicOrPrivateChannel`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Result of the archive operation.","title":"Data","properties":{"ok":{"type":"boolean","description":"Indicates if the archive operation was successful.","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"ArchiveAPublicOrPrivateChannelResponseWrapper"}
+schema info of SLACK_ARCHIVE_A_PUBLIC_OR_PRIVATE_CHANNEL ends.
+
+
+Mcp name: "Slack"
+Mcp id: "688338e4ee9e1a9340d83b62"
+Mcp url: "https://backend.composio.dev/v3/mcp/8ef98e31-cf09-45a1-b230-e9b01571a628/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: SLACK_ARCHIVE_A_SLACK_CONVERSATION
+
+Here is the input and output schema info of Tool SLACK_ARCHIVE_A_SLACK_CONVERSATION of Mcp Slack (Mcp Id: 688338e4ee9e1a9340d83b62):
+inputSchema:
+{"type":"object","properties":{"channel":{"type":"string","description":"ID of the Slack conversation to archive. This ID uniquely identifies a channel (e.g., public, private).","title":"Channel","examples":["C1234567890"]}},"title":"ArchiveASlackConversationRequest","description":"Request schema for `ArchiveASlackConversation`"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"The response from the Slack API, primarily indicating the success or failure of the archive operation. Includes an 'ok' field.","title":"Data","properties":{"ok":{"type":"boolean","title":"Ok","enum":[true]}},"required":["ok"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"ArchiveASlackConversationResponseWrapper"}
+schema info of SLACK_ARCHIVE_A_SLACK_CONVERSATION ends.

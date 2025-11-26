@@ -1,0 +1,260 @@
+{
+  "id": "102019abeaef1977acaa9ff2f4c7fce1d1b",
+  "version": "102019abeaef1977a45b675d582c5dc6810",
+  "schema": {
+    "name": "artist_profile",
+    "description": "Detailed profile for users with the artist role.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public identifier for the profile."
+        }
+      },
+      {
+        "name": "user_id",
+        "description": "The ID of the user this profile belongs to.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal identifier linking profile to user account."
+        }
+      },
+      {
+        "name": "banner_image_url",
+        "description": "URL for the artist's profile banner image.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible banner."
+        },
+        "nullable": true
+      },
+      {
+        "name": "bio",
+        "description": "A short biography or description of the artist.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible artist biography."
+        },
+        "nullable": true
+      },
+      {
+        "name": "art_style_tags",
+        "description": "An array of tags describing the artist's style.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible tags for discovery."
+        },
+        "nullable": true,
+        "items": {
+          "description": "A tag representing an art style.",
+          "type": 1
+        }
+      },
+      {
+        "name": "portfolio_image_urls",
+        "description": "An array of URLs to images in the artist's portfolio.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible portfolio."
+        },
+        "nullable": true,
+        "items": {
+          "description": "URL of a portfolio image.",
+          "type": 1
+        }
+      },
+      {
+        "name": "commission_guidelines",
+        "description": "Text describing the artist's guidelines for commissions.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public information for potential buyers."
+        },
+        "nullable": true
+      },
+      {
+        "name": "completed_work_count",
+        "description": "The total number of commissions completed by the artist.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public statistic for artist reputation."
+        },
+        "taxonomy": {
+          "category": "User Profile",
+          "subject": "Statistics"
+        },
+        "numeric": "uint"
+      },
+      {
+        "name": "likes_count",
+        "description": "The total number of likes the artist's profile has received.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public statistic for artist popularity."
+        },
+        "taxonomy": {
+          "category": "User Profile",
+          "subject": "Statistics"
+        },
+        "numeric": "uint"
+      },
+      {
+        "name": "price_range_min",
+        "description": "The minimum price for a commission from this artist.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public pricing information for buyers."
+        },
+        "numeric": "float"
+      },
+      {
+        "name": "price_range_max",
+        "description": "The maximum price for a commission from this artist.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public pricing information for buyers."
+        },
+        "numeric": "float"
+      },
+      {
+        "name": "social_links",
+        "description": "An object containing links to the artist's social media profiles.",
+        "type": 102,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly shared social media links."
+        },
+        "nullable": true,
+        "inner": [
+          {
+            "name": "twitter",
+            "description": "URL to Twitter profile.",
+            "type": 1,
+            "compliance": {
+              "confidentiality": 1,
+              "reason": "Public social link."
+            },
+            "nullable": true
+          },
+          {
+            "name": "instagram",
+            "description": "URL to Instagram profile.",
+            "type": 1,
+            "compliance": {
+              "confidentiality": 1,
+              "reason": "Public social link."
+            },
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "user_id"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "user_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ],
+        "cascade": true
+      }
+    ]
+  },
+  "task": {
+    "id": "69269165071e5324e6f628b8",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

@@ -1,0 +1,173 @@
+{
+  "id": "102019abe83be897c288b942a166f052be3",
+  "version": "102019ac164d6447c6285964527898cdb09",
+  "schema": {
+    "name": "timeline_post",
+    "description": "Public posts created by users, displayed on a public timeline.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public identifier for the post."
+        }
+      },
+      {
+        "name": "author_id",
+        "description": "The ID of the user who created the post.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal identifier linking the post to its author."
+        }
+      },
+      {
+        "name": "body",
+        "description": "The text content of the post.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public post content."
+        }
+      },
+      {
+        "name": "image_urls",
+        "description": "An array of URLs for images attached to the post.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible images."
+        },
+        "nullable": true,
+        "items": {
+          "description": "URL of an attached image.",
+          "type": 1
+        }
+      },
+      {
+        "name": "tags",
+        "description": "An array of tags associated with the post for categorization.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public tags for post discovery."
+        },
+        "nullable": true,
+        "items": {
+          "description": "A tag for the post.",
+          "type": 1
+        }
+      },
+      {
+        "name": "likes_count",
+        "description": "The number of likes the post has received.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public engagement metric."
+        },
+        "numeric": "uint"
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public creation time of the post."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "author_id"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "create_time"
+        ],
+        "order": true
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "author_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "task": {
+    "id": "692744b9b0964306551800aa",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

@@ -1,0 +1,180 @@
+{
+  "id": "102019abeaef1977baeb0817342621c92c1",
+  "version": "102019abeaef1977a45b675d582c5dc6810",
+  "schema": {
+    "name": "buyer_profile",
+    "description": "Detailed profile for users with the buyer role.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public identifier for the profile."
+        }
+      },
+      {
+        "name": "user_id",
+        "description": "The ID of the user this profile belongs to.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal identifier linking profile to user account."
+        }
+      },
+      {
+        "name": "bio",
+        "description": "A short biography or description of the buyer.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible buyer biography."
+        },
+        "nullable": true
+      },
+      {
+        "name": "interest_tags",
+        "description": "An array of tags describing the buyer's interests.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public tags to help artists understand buyer preferences."
+        },
+        "nullable": true,
+        "items": {
+          "description": "A tag representing an interest.",
+          "type": 1
+        }
+      },
+      {
+        "name": "budget_preferences",
+        "description": "The buyer's preferred budget range for commissions.",
+        "type": 102,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal data to help with matching and recommendations."
+        },
+        "nullable": true,
+        "inner": [
+          {
+            "name": "min",
+            "description": "Minimum preferred budget.",
+            "type": 2,
+            "compliance": {
+              "confidentiality": 2,
+              "reason": "Internal preference data."
+            },
+            "nullable": true,
+            "numeric": "float"
+          },
+          {
+            "name": "max",
+            "description": "Maximum preferred budget.",
+            "type": 2,
+            "compliance": {
+              "confidentiality": 2,
+              "reason": "Internal preference data."
+            },
+            "nullable": true,
+            "numeric": "float"
+          }
+        ]
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "user_id"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "user_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ],
+        "cascade": true
+      }
+    ]
+  },
+  "task": {
+    "id": "69269165071e5324e6f628b8",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

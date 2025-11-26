@@ -1,0 +1,138 @@
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_CREATE_REDDIT_POST
+
+Here is the input and output schema info of Tool REDDIT_CREATE_REDDIT_POST of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"flair_id":{"type":"string","description":"The ID of the flair to apply to the post. Use the 'REDDIT_GET_USER_FLAIR' action to find available flair IDs for the specified subreddit.","title":"Flair Id","examples":["a1b2c3d4-e5f6-7890-1234-567890abcdef"]},"kind":{"type":"string","description":"The type of the post. Use 'self' for a text-based post or 'link' for a post that links to an external URL.","title":"Kind","enum":["link","self"],"examples":["self","link"]},"subreddit":{"type":"string","description":"The name of the subreddit (without the 'r/' prefix) where the post will be submitted.","title":"Subreddit","examples":["learnpython","AskReddit"]},"text":{"type":"string","description":"The markdown-formatted text content for a 'self' post. Required if `kind` is 'self'.","title":"Text","examples":["This is the body of my text post. It can include **markdown** formatting."]},"title":{"type":"string","description":"The title of the post. Must be 300 characters or less.","title":"Title","examples":["My New Project!","Interesting Article I Found"]},"url":{"type":"string","description":"The URL for a 'link' post. Required if `kind` is 'link'.","title":"Url","examples":["https://www.example.com/news/article.html"]}},"required":["subreddit","title","flair_id","kind"],"title":"CreatePostRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"id":{"type":"string","description":"The unique identifier (fullname) of the newly created post (e.g., 't3_1abcdef').","title":"Id"},"url":{"type":"string","description":"The permalink URL of the newly created post.","title":"Url"}},"required":["id","url"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"CreatePostResponseWrapper"}
+schema info of REDDIT_CREATE_REDDIT_POST ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_DELETE_REDDIT_COMMENT
+
+Here is the input and output schema info of Tool REDDIT_DELETE_REDDIT_COMMENT of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"id":{"type":"string","description":"The full 'thing ID' (fullname, e.g., 't1_c0s4w1c') of the comment to delete; typically starts with 't1_'.","title":"Id","examples":["t1_c0s4w1c"]}},"required":["id"],"title":"DeleteCommentRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"success":{"type":"boolean","description":"Confirms that the comment was successfully deleted. This will always be `True` on success, as failures result in an error being raised by the action.","title":"Success"}},"required":["success"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"DeleteCommentResponseWrapper"}
+schema info of REDDIT_DELETE_REDDIT_COMMENT ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_DELETE_REDDIT_POST
+
+Here is the input and output schema info of Tool REDDIT_DELETE_REDDIT_POST of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"id":{"type":"string","description":"The full name (fullname) of the Reddit post to be deleted. This ID must start with 't3_' followed by the post's unique base36 identifier.","title":"Id","examples":["t3_1abcdef","t3_gfedcba"]}},"required":["id"],"title":"DeletePostRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"success":{"type":"boolean","description":"Indicates if the deletion request was successfully processed by Reddit. If the API signals an error (e.g., post not found, insufficient permissions), an exception will be raised by the action.","title":"Success"}},"required":["success"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"DeletePostResponseWrapper"}
+schema info of REDDIT_DELETE_REDDIT_POST ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_EDIT_REDDIT_COMMENT_OR_POST
+
+Here is the input and output schema info of Tool REDDIT_EDIT_REDDIT_COMMENT_OR_POST of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"text":{"type":"string","description":"The new raw markdown text for the body of the comment or self-post.","title":"Text","examples":["This is the *updated* content with **markdown** formatting."]},"thing_id":{"type":"string","description":"The full name (fullname) of the comment or self-post to edit. This is a combination of a prefix (e.g., 't1_' for comment, 't3_' for post) and the item's ID.","title":"Thing Id","examples":["t1_c0c0c0c","t3_h0h0h0h"]}},"required":["thing_id","text"],"title":"EditCommentOrPostRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"edit_response":{"type":"object","description":"A dictionary containing the response from the Reddit API's 'editusertext' endpoint. If successful, this typically includes a 'data' key with details of the edited item, such as the updated text and author.","title":"Edit Response","additionalProperties":true}},"required":["edit_response"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"EditCommentOrPostResponseWrapper"}
+schema info of REDDIT_EDIT_REDDIT_COMMENT_OR_POST ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_GET_USER_FLAIR
+
+Here is the input and output schema info of Tool REDDIT_GET_USER_FLAIR of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"subreddit":{"type":"string","description":"Name of the subreddit (e.g., 'pics', 'gaming') for which to retrieve available link flairs.","title":"Subreddit","examples":["learnpython","datascience","announcements"]}},"required":["subreddit"],"title":"GetFlairRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"flair_list":{"type":"array","description":"A list of available link flairs for the specified subreddit; each item is an object detailing a flair (e.g., text, ID).","title":"Flair List","items":{"properties":{}}}},"required":["flair_list"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"GetFlairResponseWrapper"}
+schema info of REDDIT_GET_USER_FLAIR ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_POST_REDDIT_COMMENT
+
+Here is the input and output schema info of Tool REDDIT_POST_REDDIT_COMMENT of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"text":{"type":"string","description":"The raw Markdown text of the comment to be submitted.","title":"Text","examples":["This is an insightful comment!","I agree completely."]},"thing_id":{"type":"string","description":"The ID of the parent post (link) or comment, prefixed with 't3_' for a post (e.g., 't3_10omtdx') or 't1_' for a comment (e.g., 't1_h2g9w8l').","title":"Thing Id","examples":["t3_10omtdx","t1_h2g9w8l"]}},"required":["thing_id","text"],"title":"PostCommentRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"id":{"type":"string","description":"The full ID of the newly created comment, prefixed with 't1_' (e.g., 't1_h2g9w8m').","title":"Id"},"parent_id":{"type":"string","description":"The full ID of the parent post or comment to which this new comment was added. Prefixed with 't3_' for a post or 't1_' for a comment.","title":"Parent Id"},"text":{"type":"string","description":"The actual text content of the created comment.","title":"Text"}},"required":["id","parent_id","text"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"PostCommentResponseWrapper"}
+schema info of REDDIT_POST_REDDIT_COMMENT ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_RETRIEVE_POST_COMMENTS
+
+Here is the input and output schema info of Tool REDDIT_RETRIEVE_POST_COMMENTS of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"article":{"type":"string","description":"Base-36 ID of the Reddit post (e.g., 'q5u7q5'), typically found in the post's URL and not including the 't3_' prefix.","title":"Article","examples":["q5u7q5","13a9zao"]}},"required":["article"],"title":"RetrieveCommentsRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"comments":{"type":"array","description":"A list of top-level `CommentData` objects for the post.","title":"Comments","items":{"type":"object","title":"CommentData","properties":{"author":{"type":"string","description":"Username of the comment's author; can be '[deleted]' if the account is deleted or author obscured.","title":"Author","examples":["SpecificUsername","[deleted]"]},"body":{"type":"string","description":"HTML content of the comment; may be empty if deleted or unavailable.","title":"Body","examples":["This is a great comment!","A reply with <em>emphasis</em>.",""]},"id":{"type":"string","description":"Base-36 ID of the comment (e.g., 'h3g4g5'), not including the 't1_' prefix.","title":"Id","examples":["h3g4g5","f00b4r"]},"parent_id":{"type":"string","description":"Fullname of the parent item (comment or post) this comment replies to; typically starts with 't1_' (parent comment) or 't3_' (parent post). May be empty if unavailable.","title":"Parent Id","examples":["t1_h3g4g5","t3_q5u7q5",""]},"replies":{"type":"array","description":"Nested replies as raw dictionaries from the API, requiring parsing into `CommentData`; `None` if no replies or not in response.","title":"Replies","default":null,"nullable":true,"items":{"type":"object","properties":{},"additionalProperties":true}}},"required":["id","author","body","parent_id"]}}},"required":["comments"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"RetrieveCommentsResponseWrapper"}
+schema info of REDDIT_RETRIEVE_POST_COMMENTS ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_RETRIEVE_REDDIT_POST
+
+Here is the input and output schema info of Tool REDDIT_RETRIEVE_REDDIT_POST of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"size":{"type":"integer","description":"The maximum number of posts to return. Default is 5. Set to 0 to retrieve all available posts (or the maximum allowed by the Reddit API for a single request, typically up to 100 for this type of listing).","title":"Size","default":5,"nullable":true,"examples":["5","10","0","25"]},"subreddit":{"type":"string","description":"The name of the subreddit from which to retrieve posts (e.g., 'popular', 'pics'). Do not include 'r/'.","title":"Subreddit","examples":["technology","python","news"]}},"required":["subreddit"],"title":"RetrievePostRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"posts_list":{"type":"array","description":"A list of dictionaries, where each dictionary represents a Reddit post and contains its data. Common keys include 'title', 'url', 'author', 'score', 'num_comments', 'created_utc', 'subreddit', 'selftext', 'permalink', 'id', 'name' (full ID like t3_xxxx), 'ups', 'downs', 'is_original_content', 'is_self', 'is_video', 'media', 'thumbnail', 'stickied', 'spoiler', 'nsfw', etc. The exact fields can vary based on the post type and API version.","title":"Posts List","items":{"type":"object","properties":{},"additionalProperties":true}}},"required":["posts_list"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"RetrievePostResponseWrapper"}
+schema info of REDDIT_RETRIEVE_REDDIT_POST ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_RETRIEVE_SPECIFIC_COMMENT
+
+Here is the input and output schema info of Tool REDDIT_RETRIEVE_SPECIFIC_COMMENT of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"id":{"type":"string","description":"Fullname of the comment or post to retrieve (e.g., 't1_c123456', 't3_x56789').","title":"Id","examples":["t1_c123456","t3_x56789"]}},"required":["id"],"title":"RetrieveCommentRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"things":{"type":"array","description":"List of items (comments or posts) matching the `id` from the request; typically contains a single item.","title":"Things","items":{"type":"object","title":"ThingData","properties":{"data":{"type":"object","description":"Detailed data attributes for the item; structure varies based on its 'kind'.","title":"Data","additionalProperties":true},"id":{"type":"string","description":"Unique base36 ID of the item, excluding the 'kind' prefix.","title":"Id"},"kind":{"type":"string","description":"Type identifier for the item (e.g., 't1' for comment, 't3' for link/post).","title":"Kind"},"name":{"type":"string","description":"Fullname of the item, including 'kind' prefix and base36 ID (e.g., 't1_c123456').","title":"Name"}},"required":["id","name","kind","data"]}}},"required":["things"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"RetrieveCommentResponseWrapper"}
+schema info of REDDIT_RETRIEVE_SPECIFIC_COMMENT ends.
+
+
+Mcp name: "Reddit"
+Mcp id: "6878f9b97df7dc701c215ca3"
+Mcp url: "https://backend.composio.dev/v3/mcp/ac359c2c-332d-498b-a98d-7e9abbeb2b07/mcp?user_id=6926863bc42fb3866ca5f41c"
+Schema info:
+Tool Name: REDDIT_SEARCH_ACROSS_SUBREDDITS
+
+Here is the input and output schema info of Tool REDDIT_SEARCH_ACROSS_SUBREDDITS of Mcp Reddit (Mcp Id: 6878f9b97df7dc701c215ca3):
+inputSchema:
+{"type":"object","properties":{"limit":{"type":"integer","description":"The maximum number of search results to return. Default is 5. Maximum allowed value is 100.","title":"Limit","default":5,"maximum":100,"examples":["5","10","25"]},"restrict_sr":{"type":"boolean","description":"If True (default), confines the search to posts and comments within subreddits. If False, the search scope is broader and may include matching subreddit names or other Reddit entities.","title":"Restrict Sr","default":true,"examples":["True","False"]},"search_query":{"type":"string","description":"The search query string used to find content across subreddits.","title":"Search Query","examples":["latest AI research","funny cat videos","python programming tips"]},"sort":{"type":"string","description":"The criterion for sorting search results. 'relevance' (default) sorts by relevance to the query. 'new' sorts by newest first. 'top' sorts by highest score (typically all-time). 'comments' sorts by the number of comments.","title":"Sort","default":"relevance","enum":["relevance","new","top","comments"],"examples":["relevance","new","top","comments"]}},"required":["search_query"],"title":"SearchAcrossSubredditsRequest"}
+outputSchema:
+{"type":"object","properties":{"data":{"type":"object","description":"Data from the action execution","title":"Data","properties":{"search_results":{"type":"object","description":"Raw JSON response from Reddit's search API, typically a 'Listing' object with 'data' containing 'children' (search results) and pagination cursors.","title":"Search Results","additionalProperties":true}},"required":["search_results"],"additionalProperties":false},"error":{"type":"string","description":"Error if any occurred during the execution of the action","title":"Error","default":null,"nullable":true},"successful":{"type":"boolean","description":"Whether or not the action execution was successful or not","title":"Successful"}},"required":["data","successful"],"title":"SearchAcrossSubredditsResponseWrapper"}
+schema info of REDDIT_SEARCH_ACROSS_SUBREDDITS ends.

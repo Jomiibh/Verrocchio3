@@ -1,0 +1,173 @@
+{
+  "id": "102019abe83be8a7336bfbd757bf8ca6d59",
+  "version": "102019ac164d6447c6285964527898cdb09",
+  "schema": {
+    "name": "artist_swipe",
+    "description": "Tracks a buyer's swipe (like/pass) on an artist in the discovery feature.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal identifier for a user interaction."
+        }
+      },
+      {
+        "name": "buyer_id",
+        "description": "The ID of the buyer who performed the swipe.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal data for matchmaking and analytics."
+        }
+      },
+      {
+        "name": "artist_id",
+        "description": "The ID of the artist who was swiped on.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal data for matchmaking and analytics."
+        }
+      },
+      {
+        "name": "direction",
+        "description": "The direction of the swipe (like or pass).",
+        "type": 100,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal data representing user preference."
+        },
+        "enumeration": [
+          {
+            "value": "Unspecified"
+          },
+          {
+            "number": 1,
+            "value": "Like"
+          },
+          {
+            "number": 2,
+            "value": "Pass"
+          }
+        ]
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "artist_id",
+          "buyer_id"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "artist_id",
+          "direction"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "buyer_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ],
+        "cascade": true
+      },
+      {
+        "referencing_fields": [
+          "artist_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ],
+        "cascade": true
+      }
+    ]
+  },
+  "task": {
+    "id": "692744b9b0964306551800aa",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

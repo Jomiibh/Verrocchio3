@@ -1,0 +1,238 @@
+{
+  "id": "102019abe83be8a76dcac834b89d36cf9a1",
+  "version": "102019ac164d6447c6285964527898cdb09",
+  "schema": {
+    "name": "commission_request",
+    "description": "Public requests for commissions posted by buyers on a public board.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public identifier for the request."
+        }
+      },
+      {
+        "name": "poster_id",
+        "description": "The ID of the user (buyer) who posted the request.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal identifier linking the request to its author."
+        }
+      },
+      {
+        "name": "title",
+        "description": "The title of the commission request.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public request title."
+        }
+      },
+      {
+        "name": "description",
+        "description": "A detailed description of the requested commission.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public request description."
+        }
+      },
+      {
+        "name": "sample_image_urls",
+        "description": "An array of URLs for sample or reference images.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible reference images."
+        },
+        "nullable": true,
+        "items": {
+          "description": "URL of a sample image.",
+          "type": 1
+        }
+      },
+      {
+        "name": "budget_min",
+        "description": "The minimum budget for this commission.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public budget information for artists."
+        },
+        "numeric": "float"
+      },
+      {
+        "name": "budget_max",
+        "description": "The maximum budget for this commission.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public budget information for artists."
+        },
+        "numeric": "float"
+      },
+      {
+        "name": "tags",
+        "description": "An array of tags to categorize the request.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public tags for request discovery."
+        },
+        "nullable": true,
+        "items": {
+          "description": "A tag for the request.",
+          "type": 1
+        }
+      },
+      {
+        "name": "status",
+        "description": "The current status of the commission request.",
+        "type": 100,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public status of the request."
+        },
+        "enumeration": [
+          {
+            "value": "Unspecified"
+          },
+          {
+            "number": 1,
+            "value": "Open"
+          },
+          {
+            "number": 2,
+            "value": "InProgress"
+          },
+          {
+            "number": 3,
+            "value": "Closed"
+          }
+        ]
+      },
+      {
+        "name": "interested_artist_ids",
+        "description": "An array of user IDs of artists who have shown interest.",
+        "type": 101,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "List of interested artists, visible to the buyer."
+        },
+        "nullable": true,
+        "items": {
+          "description": "ID of an interested artist.",
+          "type": 1
+        }
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public creation time of the request."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "poster_id"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "create_time"
+        ],
+        "order": true
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "poster_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "task": {
+    "id": "692744b9b0964306551800aa",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

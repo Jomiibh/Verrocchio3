@@ -1,0 +1,192 @@
+{
+  "id": "102019abeaef1977dd5a23037bcba8cc725",
+  "version": "102019abeaef1977a45b675d582c5dc6810",
+  "schema": {
+    "name": "user",
+    "description": "Represents users of the platform, who can be artists, buyers, or both.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Public identifier for a user."
+        }
+      },
+      {
+        "name": "display_name",
+        "description": "Public display name of the user.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "This is a public username."
+        }
+      },
+      {
+        "name": "avatar_url",
+        "description": "URL for the user's avatar image.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "Publicly visible avatar."
+        },
+        "nullable": true
+      },
+      {
+        "name": "role",
+        "description": "The role of the user on the platform.",
+        "type": 100,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal system data for role-based access."
+        },
+        "enumeration": [
+          {
+            "value": "Unspecified"
+          },
+          {
+            "number": 1,
+            "value": "Artist"
+          },
+          {
+            "number": 2,
+            "value": "Buyer"
+          },
+          {
+            "number": 3,
+            "value": "Both"
+          }
+        ]
+      },
+      {
+        "name": "email",
+        "description": "User's email address for login and notifications.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "User PII for account management and communication."
+        },
+        "format": "email"
+      },
+      {
+        "name": "username",
+        "description": "Unique username for login and platform identification.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Unique identifier for user account."
+        }
+      },
+      {
+        "name": "password_hash",
+        "description": "Hashed password for user authentication.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 4,
+          "reason": "Highly sensitive authentication credential."
+        },
+        "encryption": true
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "email"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "username"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "display_name"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "role"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ]
+  },
+  "task": {
+    "id": "69269165071e5324e6f628b8",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}

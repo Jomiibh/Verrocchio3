@@ -1,0 +1,247 @@
+{
+  "id": "102019abeaef1977c06a703ccdef029e3eb",
+  "version": "102019abeaef1977a45b675d582c5dc6810",
+  "schema": {
+    "name": "commission_offer",
+    "description": "A formal offer for a commission from an artist to a buyer, with terms and status.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each data of this entity.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Internal identifier for a business transaction."
+        }
+      },
+      {
+        "name": "artist_id",
+        "description": "The ID of the artist making the offer.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Identifies a party in a business transaction."
+        }
+      },
+      {
+        "name": "buyer_id",
+        "description": "The ID of the buyer receiving the offer.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Identifies a party in a business transaction."
+        }
+      },
+      {
+        "name": "commission_request_id",
+        "description": "The ID of the public commission request this offer is related to, if any.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Links an offer to a public request for context."
+        },
+        "nullable": true
+      },
+      {
+        "name": "description",
+        "description": "A description of the work to be done in the commission.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Terms of the commission agreement."
+        }
+      },
+      {
+        "name": "price",
+        "description": "The agreed total price for the commission.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Financial details of the commission agreement."
+        },
+        "numeric": "float"
+      },
+      {
+        "name": "deposit_amount",
+        "description": "The amount of the deposit required, if any.",
+        "type": 2,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Financial details of the commission agreement."
+        },
+        "nullable": true,
+        "numeric": "float"
+      },
+      {
+        "name": "status",
+        "description": "The current status of the offer.",
+        "type": 100,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Tracks the state of the business transaction."
+        },
+        "enumeration": [
+          {
+            "value": "Unspecified"
+          },
+          {
+            "number": 1,
+            "value": "Pending"
+          },
+          {
+            "number": 2,
+            "value": "Accepted"
+          },
+          {
+            "number": 3,
+            "value": "Rejected"
+          },
+          {
+            "number": 4,
+            "value": "Completed"
+          }
+        ]
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Internal tracking data."
+        },
+        "format": "timestamp"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "artist_id"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "buyer_id"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "artist_id",
+          "status"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "buyer_id",
+          "status"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      }
+    ],
+    "relations": [
+      {
+        "referencing_fields": [
+          "artist_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ]
+      },
+      {
+        "referencing_fields": [
+          "buyer_id"
+        ],
+        "referenced_entity": {
+          "name": "user"
+        },
+        "referenced_fields": [
+          "id"
+        ]
+      },
+      {
+        "referencing_fields": [
+          "commission_request_id"
+        ],
+        "referenced_entity": {
+          "name": "commission_request"
+        },
+        "referenced_fields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "task": {
+    "id": "69269165071e5324e6f628b8",
+    "root": "6926863bc42fb3866ca5f41d",
+    "project": "6926863bc42fb3866ca5f41c",
+    "user": "881133e0-0021-7023-f70f-dee9958fb8af"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}
