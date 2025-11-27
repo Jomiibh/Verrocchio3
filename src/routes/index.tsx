@@ -1312,7 +1312,10 @@ function CreateFeedPostDialog({ onClose }: { onClose: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['user-posts'] });
       onClose();
+      setBody("");
+      setImages([]);
     },
   });
 
@@ -2449,7 +2452,6 @@ function RequestsPage() {
 function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (page: Page) => void; addNotification?: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void }) {
   const { currentUser } = useUser();
   const [profile, setProfile] = useState<any>(null);
-  const [userPosts, setUserPosts] = useState<TimelinePostModel[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleMessageClick = async () => {
@@ -2482,14 +2484,16 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
       return res.user;
     },
     enabled: !!currentUser,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
-  useQuery({
+  const { data: userPosts = [] } = useQuery({
     queryKey: ['user-posts', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
       const res = await getPosts();
-      const mine = (res.posts || [])
+      return (res.posts || [])
         .filter((p: any) => p.authorId === currentUser.id)
         .map((p: any) => ({
           id: p.id,
@@ -2500,10 +2504,10 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
           create_time: p.createdAt ? `${new Date(p.createdAt).getTime()}` : `${Date.now()}`,
         }))
         .sort((a: any, b: any) => parseInt(b.create_time) - parseInt(a.create_time));
-      setUserPosts(mine);
-      return mine;
     },
     enabled: !!currentUser,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   if (!currentUser) {
