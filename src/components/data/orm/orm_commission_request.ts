@@ -46,6 +46,12 @@ export interface CommissionRequestModel {
   tags?: string[] | null;
   status: CommissionRequestStatus;
   interested_artist_ids?: string[] | null;
+  poster?: {
+    id: string;
+    display_name: string;
+    avatar_url?: string | null;
+    username: string;
+  };
   data_creator: string;
   data_updater: string;
   create_time: string;

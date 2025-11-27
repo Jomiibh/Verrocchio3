@@ -2373,7 +2373,13 @@ function DiscoverPage({
   );
 }
 
-function RequestsPage() {
+function RequestsPage({
+  setCurrentPage,
+  setSelectedArtistForSlides,
+}: {
+  setCurrentPage?: (page: Page) => void;
+  setSelectedArtistForSlides?: (data: { artist: ArtistProfileModel; user: UserModel } | null) => void;
+}) {
   const { currentUser } = useUser();
   const [interestRequest, setInterestRequest] = useState<CommissionRequestModel | null>(null);
   const [interestMessage, setInterestMessage] = useState("");
