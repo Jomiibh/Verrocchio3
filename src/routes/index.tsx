@@ -2375,6 +2375,9 @@ function DiscoverPage({
 
 function RequestsPage() {
   const { currentUser } = useUser();
+  const [interestRequest, setInterestRequest] = useState<CommissionRequestModel | null>(null);
+  const [interestMessage, setInterestMessage] = useState("");
+  const [selectedProfileUser, setSelectedProfileUser] = useState<UserModel | null>(null);
 
   const { data: requests = [] } = useQuery({
     queryKey: ['commission-requests'],
@@ -2395,18 +2398,92 @@ function RequestsPage() {
                 <h3 className="text-xl font-bold text-white">{request.title}</h3>
                 <Badge className="vgen-badge-open">{request.status}</Badge>
               </div>
+              {request.poster && (
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    className="size-12 cursor-pointer"
+                    onClick={() => {
+                      setSelectedArtistForSlides?.(null);
+                      setCurrentPage?.("profile");
+                      sessionStorage.setItem("view_profile_user_id", request.poster.id);
+                    }}
+                  >
+                    <AvatarImage src={request.poster.avatar_url || undefined} />
+                    <AvatarFallback>{request.poster.display_name?.[0] || "?"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-white font-semibold">{request.poster.display_name}</p>
+                    <p className="text-xs text-[#a0a8b8]">@{request.poster.username}</p>
+                  </div>
+                </div>
+              )}
+              {request.sample_image_urls && request.sample_image_urls.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {request.sample_image_urls.slice(0, 2).map((url: string, idx: number) => (
+                    <img key={idx} src={url} alt="" className="w-full h-24 object-cover rounded-lg" />
+                  ))}
+                </div>
+              )}
               <p className="text-[#a0a8b8] text-sm line-clamp-3">{request.description}</p>
               <div className="flex items-center justify-between pt-4 border-t border-[#2a3142]">
                 <div>
                   <p className="text-xs text-[#a0a8b8]">Budget</p>
                   <p className="text-white font-semibold">${request.budget_min} - ${request.budget_max}</p>
                 </div>
-                <Button className="vgen-button-secondary px-4 text-sm">I'm Interested</Button>
+                <Button
+                  className="vgen-button-secondary px-4 text-sm"
+                  onClick={() => {
+                    setInterestRequest(request);
+                    setInterestMessage("");
+                  }}
+                >
+                  I'm Interested
+                </Button>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!interestRequest} onOpenChange={(open) => { if (!open) setInterestRequest(null); }}>
+        <DialogContent className="bg-[#1e2433] border-[#2a3142] max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-white">Message Buyer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-[#a0a8b8]">
+              Send a message to the buyer about "{interestRequest?.title}".
+            </p>
+            <Textarea
+              value={interestMessage}
+              onChange={(e) => setInterestMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="bg-[#242b3d] border-[#2a3142] text-white min-h-24"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setInterestRequest(null)} className="text-[#a0a8b8] border-[#2a3142]">
+                Cancel
+              </Button>
+              <Button
+                className="vgen-button-primary"
+                disabled={!interestMessage.trim()}
+                onClick={async () => {
+                  if (!currentUser || !interestRequest) return;
+                  try {
+                    sessionStorage.setItem("pending_conversation_user_id", interestRequest.poster_id);
+                  } catch {}
+                  await createConversation(interestRequest.poster_id);
+                  setInterestRequest(null);
+                  setInterestMessage("");
+                  // Optional: add a notification locally
+                }}
+              >
+                Send & Open DM
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

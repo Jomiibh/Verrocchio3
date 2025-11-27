@@ -26,6 +26,14 @@ function mapRequest(doc, user) {
           username: user.username,
         }
       : null,
+    poster: user
+      ? {
+          id: user.id,
+          display_name: user.display_name || "",
+          avatar_url: user.avatar_url || null,
+          username: user.username,
+        }
+      : null,
   };
 }
 
