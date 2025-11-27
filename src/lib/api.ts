@@ -77,6 +77,10 @@ export async function updateProfile(input: {
     discord?: string;
     other?: string;
   };
+  slides?: any[];
+  artStyles?: string[];
+  priceMin?: number;
+  priceMax?: number;
 }) {
   return apiFetch("/users/me", {
     method: "PUT",
@@ -98,4 +102,72 @@ export async function createPost(input: { body: string; imageUrls: string[] }) {
 export async function getArtists(search?: string) {
   const qs = search ? `?q=${encodeURIComponent(search)}` : "";
   return apiFetch(`/users/artists${qs}`, { method: "GET" });
+}
+
+// Commission requests
+export async function getRequests() {
+  return apiFetch("/requests", { method: "GET" });
+}
+
+export async function getMyRequests() {
+  return apiFetch("/requests/mine", { method: "GET" });
+}
+
+export async function createRequest(input: {
+  title: string;
+  description: string;
+  budget_min?: number;
+  budget_max?: number;
+  timeframe?: string;
+  tags?: string[];
+  sample_image_urls?: string[];
+  status?: string;
+}) {
+  return apiFetch("/requests", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateRequest(id: string, input: Partial<{
+  title: string;
+  description: string;
+  budget_min: number;
+  budget_max: number;
+  timeframe: string;
+  tags: string[];
+  sample_image_urls: string[];
+  status: string;
+}>) {
+  return apiFetch(`/requests/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteRequest(id: string) {
+  return apiFetch(`/requests/${id}`, { method: "DELETE" });
+}
+
+// Conversations & messages
+export async function getConversations() {
+  return apiFetch("/conversations", { method: "GET" });
+}
+
+export async function createConversation(participantId: string) {
+  return apiFetch("/conversations", {
+    method: "POST",
+    body: JSON.stringify({ participantId }),
+  });
+}
+
+export async function getMessages(conversationId: string) {
+  return apiFetch(`/conversations/${conversationId}/messages`, { method: "GET" });
+}
+
+export async function sendMessage(conversationId: string, content: string) {
+  return apiFetch(`/conversations/${conversationId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
 }

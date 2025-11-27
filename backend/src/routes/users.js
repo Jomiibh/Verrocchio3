@@ -44,6 +44,10 @@ router.put("/me", requireAuth, async (req, res) => {
       avatar_url,
       banner_url,
       social_links,
+      slides,
+      artStyles,
+      priceMin,
+      priceMax,
     } = req.body || {};
 
     if (typeof display_name === "string") update.display_name = display_name;
@@ -58,6 +62,14 @@ router.put("/me", requireAuth, async (req, res) => {
         other: social_links.other || "",
       };
     }
+    if (Array.isArray(slides)) {
+      update.slides = slides;
+    }
+    if (Array.isArray(artStyles)) {
+      update.artStyles = artStyles;
+    }
+    if (typeof priceMin === "number") update.priceMin = priceMin;
+    if (typeof priceMax === "number") update.priceMax = priceMax;
 
     const user = await User.findByIdAndUpdate(userId, update, { new: true });
     if (!user) {

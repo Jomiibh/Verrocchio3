@@ -17,15 +17,31 @@ import {
   Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar,
   ArrowLeft, ArrowRight
 } from "lucide-react";
-import { UserORM, UserRole, type UserModel } from "@/components/data/orm/orm_user";
+import { UserRole, type UserModel } from "@/components/data/orm/orm_user";
 import { type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
-import { ArtistProfileORM, type ArtistProfileModel } from "@/components/data/orm/orm_artist_profile";
-import { BuyerProfileORM } from "@/components/data/orm/orm_buyer_profile";
-import { CommissionRequestORM, type CommissionRequestModel } from "@/components/data/orm/orm_commission_request";
-import { ConversationORM, type ConversationModel } from "@/components/data/orm/orm_conversation";
+import { type ArtistProfileModel } from "@/components/data/orm/orm_artist_profile";
+import { type CommissionRequestModel } from "@/components/data/orm/orm_commission_request";
 import { useCreaoFileUpload } from "@/hooks/use-creao-file-upload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile, getPosts, createPost, getArtists } from "@/lib/api";
+import {
+  loginApi,
+  registerApi,
+  saveAuthToken,
+  getProfile,
+  updateProfile,
+  getPosts,
+  createPost,
+  getArtists,
+  getRequests,
+  getMyRequests,
+  createRequest,
+  updateRequest,
+  deleteRequest,
+  getConversations,
+  createConversation,
+  getMessages,
+  sendMessage,
+} from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -52,6 +68,7 @@ interface Conversation {
   lastMessage: string;
   timestamp: number;
   unreadCount?: number;
+  conversationId?: string;
 }
 
 interface Notification {
@@ -385,18 +402,8 @@ function SwipePage({
   const { data: artists = [] } = useQuery({
     queryKey: ['all-artists-with-users'],
     queryFn: async () => {
-      const artistOrm = ArtistProfileORM.getInstance();
-      const userOrm = UserORM.getInstance();
-      const allArtists = await artistOrm.getAllArtistProfile();
-
-      const artistsWithUsers = await Promise.all(
-        allArtists.map(async (artist) => {
-          const users = await userOrm.getUserById(artist.user_id);
-          return { artist, user: users[0] };
-        })
-      );
-
-      return artistsWithUsers.filter(item => item.user);
+      const res = await getArtists();
+      return (res.artists || []) as { artist: ArtistProfileModel; user: UserModel }[];
     },
   });
 
@@ -479,24 +486,7 @@ function SwipePage({
   const handleMessage = async () => {
     if (!currentArtistData || !currentUser) return;
 
-    // Create or find conversation with this specific artist
-    const conversationOrm = ConversationORM.getInstance();
-    const allConversations = await conversationOrm.getAllConversation();
-
-    // Check if conversation already exists
-    let existingConversation = allConversations.find(conv => {
-      const participants = conv.participant_ids || [];
-      return participants.includes(currentUser.id) && participants.includes(currentArtistData.user.id);
-    });
-
-    // Create new conversation if it doesn't exist
-    if (!existingConversation) {
-      const newConversations = await conversationOrm.insertConversation([{
-        participant_ids: [currentUser.id, currentArtistData.user.id],
-        last_message_time: Date.now().toString(),
-      } as any]);
-      existingConversation = newConversations[0];
-    }
+    await createConversation(currentArtistData.user.id);
 
     // Add notification
     const avatarUrl: string | null = currentArtistData.user.avatar_url ?? null;
@@ -956,18 +946,7 @@ function PostDetailModal({
   isLiked: boolean;
   setCurrentPage: (page: Page) => void;
 }) {
-  const [author, setAuthor] = useState<any>(null);
-
-  useQuery({
-    queryKey: ['user', post.author_id],
-    queryFn: async () => {
-      const userOrm = UserORM.getInstance();
-      const users = await userOrm.getUserById(post.author_id);
-      if (users[0]) setAuthor(users[0]);
-      return users[0];
-    },
-  });
-
+  const author = (post as any).author || null;
   if (!author) return null;
 
   const handleProfileClick = () => {
@@ -1180,18 +1159,13 @@ function AddToSlidesDialog({ onClose }: { onClose: () => void }) {
   const handleSubmit = async () => {
     if (!currentUser || images.length === 0) return;
 
-    // Update artist profile with new slide images
-    const artistOrm = ArtistProfileORM.getInstance();
-    const profiles = await artistOrm.getArtistProfileByUserId(currentUser.id);
+    await updateProfile({
+      // append slides to current slides; backend will overwrite, so send slides list
+      slides: images.map((url) => ({ imageUrl: url, title: title || "", tags })),
+      artStyles: tags,
+    });
 
-    if (profiles[0]) {
-      await artistOrm.setArtistProfileById(profiles[0].id, {
-        ...profiles[0],
-        portfolio_image_urls: [...(profiles[0].portfolio_image_urls || []), ...images],
-        art_style_tags: tags.length > 0 ? tags : profiles[0].art_style_tags,
-      });
-    }
-
+    queryClient.invalidateQueries({ queryKey: ['artists'] });
     queryClient.invalidateQueries({ queryKey: ['all-artists-with-users'] });
     onClose();
   };
@@ -1377,17 +1351,15 @@ function CreateRequestDialog({ onClose }: { onClose: () => void }) {
   const createRequestMutation = useMutation({
     mutationFn: async () => {
       if (!currentUser) return;
-      const requestOrm = CommissionRequestORM.getInstance();
-      await requestOrm.insertCommissionRequest([{
-        poster_id: currentUser.id,
+      await createRequest({
         title,
         description,
         budget_min: parseInt(budgetMin) || 0,
         budget_max: parseInt(budgetMax) || (parseInt(budgetMin) * 2) || 1000,
         status: "open",
-        tags: tags.length > 0 ? tags : null,
-        sample_image_urls: images.length > 0 ? images : null,
-      } as any]);
+        tags: tags.length > 0 ? tags : undefined,
+        sample_image_urls: images.length > 0 ? images : undefined,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['commission-requests'] });
@@ -2030,21 +2002,7 @@ function ArtworkDetailModal({
   const handleMessage = async () => {
     if (!currentUser) return;
 
-    // Create or find conversation with this artist
-    const conversationOrm = ConversationORM.getInstance();
-    const allConversations = await conversationOrm.getAllConversation();
-
-    let existingConversation = allConversations.find(conv => {
-      const participants = conv.participant_ids || [];
-      return participants.includes(currentUser.id) && participants.includes(user.id);
-    });
-
-    if (!existingConversation) {
-      await conversationOrm.insertConversation([{
-        participant_ids: [currentUser.id, user.id],
-        last_message_time: Date.now().toString(),
-      } as any]);
-    }
+    await createConversation(user.id);
 
     setCurrentPage('messages');
     onClose();
@@ -2395,8 +2353,8 @@ function RequestsPage() {
   const { data: requests = [] } = useQuery({
     queryKey: ['commission-requests'],
     queryFn: async () => {
-      const requestOrm = CommissionRequestORM.getInstance();
-      return await requestOrm.getAllCommissionRequest();
+      const res = await getRequests();
+      return res.requests || [];
     },
   });
 
@@ -2404,7 +2362,7 @@ function RequestsPage() {
     <div className="max-w-[1200px] mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold text-white mb-8">Commission Board</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {requests.map((request) => (
+        {requests.map((request: CommissionRequestModel) => (
           <Card key={request.id} className="vgen-card p-6">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
@@ -2437,8 +2395,6 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
 
     // Create or find conversation with this user (for demo, we'll show the message page)
     // In a real app, you'd create a conversation with the viewed profile user
-    const conversationOrm = ConversationORM.getInstance();
-
     // For now, just navigate to messages with a notification
     const avatarUrl: string | null = currentUser.avatar_url ?? null;
     addNotification({
@@ -2638,66 +2594,73 @@ function SettingsPage() {
 function MessagesPage() {
   const { currentUser } = useUser();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Conversation | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // Load conversations from database
+  // Load conversations from backend
   useQuery({
     queryKey: ['conversations', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
-
-      const conversationOrm = ConversationORM.getInstance();
-      const allConversations = await conversationOrm.getAllConversation();
-
-      // Filter conversations that include current user
-      const userConversations = allConversations.filter(conv =>
-        conv.participant_ids?.includes(currentUser.id)
-      );
-
-      // Transform to Conversation format
-      const userOrm = UserORM.getInstance();
-      const transformed = await Promise.all(
-        userConversations.map(async (conv) => {
-          // Get the other participant
-          const otherUserId = conv.participant_ids?.find(id => id !== currentUser.id);
-          if (!otherUserId) return null;
-
-          const otherUsers = await userOrm.getUserById(otherUserId);
-          const otherUser = otherUsers[0];
-          if (!otherUser) return null;
-
-          return {
-            userId: otherUser.id,
-            userName: otherUser.display_name,
-            userAvatar: otherUser.avatar_url || null,
-            lastMessage: "Start a conversation",
-            timestamp: parseInt(conv.last_message_time || Date.now().toString()),
-          };
-        })
-      );
-
-      const filtered = transformed.filter((c): c is Conversation => c !== null);
-      setConversations(filtered);
-      return filtered;
+      const res = await getConversations();
+      const transformed = (res.conversations || []).map((conv: any) => ({
+        userId: conv.other_user?.id || "",
+        userName: conv.other_user?.display_name || "User",
+        userAvatar: conv.other_user?.avatar_url || null,
+        lastMessage: conv.last_message || "Start a conversation",
+        timestamp: conv.last_message_time ? new Date(conv.last_message_time).getTime() : Date.now(),
+        conversationId: conv.id,
+      }));
+      setConversations(transformed);
+      if (!selectedConversation && transformed[0]) {
+        setSelectedConversation(transformed[0].conversationId);
+        setSelectedUser(transformed[0]);
+      }
+      return transformed;
     },
     enabled: !!currentUser,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim() || !currentUser || !selectedConversation) return;
+  // Load messages for selected conversation
+  useQuery({
+    queryKey: ['messages', selectedConversation],
+    queryFn: async () => {
+      if (!selectedConversation) return [];
+    const res = await getMessages(selectedConversation);
+    const msgs = (res.messages || []).map((m: any) => ({
+      id: m.id,
+      senderId: m.senderId,
+      recipientId: m.recipientId,
+      content: m.content,
+        timestamp: new Date(m.createdAt || Date.now()).getTime(),
+      }));
+      setMessages(msgs);
+      return msgs;
+    },
+    enabled: !!selectedConversation,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: currentUser.id,
-      recipientId: selectedConversation,
-      content: messageInput,
-      timestamp: Date.now(),
-    };
-
-    setMessages([...messages, newMessage]);
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !currentUser || !selectedConversation || !selectedUser) return;
+    const content = messageInput.trim();
+    await sendMessage(selectedConversation, content);
     setMessageInput("");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        senderId: currentUser.id,
+        recipientId: selectedUser.userId,
+        content,
+        timestamp: Date.now(),
+      },
+    ]);
   };
 
   if (!currentUser) {
@@ -2718,11 +2681,14 @@ function MessagesPage() {
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conv) => (
             <button
-              key={conv.userId}
-              onClick={() => setSelectedConversation(conv.userId)}
+              key={conv.conversationId || conv.userId}
+              onClick={() => {
+                setSelectedConversation(conv.conversationId || conv.userId);
+                setSelectedUser(conv);
+              }}
               className={`
                 w-full p-4 flex items-center gap-3 border-b border-[#2a3142] transition-colors
-                ${selectedConversation === conv.userId ? 'bg-[#1e2433]' : 'hover:bg-[#1a1f2e]'}
+                ${selectedConversation === (conv.conversationId || conv.userId) ? 'bg-[#1e2433]' : 'hover:bg-[#1a1f2e]'}
               `}
             >
               <Avatar className="size-12">
@@ -2746,11 +2712,11 @@ function MessagesPage() {
             <div className="p-4 border-b border-[#2a3142] bg-[#151827]">
               <div className="flex items-center gap-3">
                 <Avatar className="size-10">
-                  <AvatarImage src={conversations.find(c => c.userId === selectedConversation)?.userAvatar || undefined} />
-                  <AvatarFallback>{conversations.find(c => c.userId === selectedConversation)?.userName[0]}</AvatarFallback>
+                  <AvatarImage src={selectedUser?.userAvatar || undefined} />
+                  <AvatarFallback>{selectedUser?.userName?.[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-white font-semibold">{conversations.find(c => c.userId === selectedConversation)?.userName}</p>
+                  <p className="text-white font-semibold">{selectedUser?.userName}</p>
                   <p className="text-xs text-[#a0a8b8]">Active now</p>
                 </div>
               </div>
@@ -2759,10 +2725,6 @@ function MessagesPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages
-                .filter(m =>
-                  (m.senderId === currentUser.id && m.recipientId === selectedConversation) ||
-                  (m.recipientId === currentUser.id && m.senderId === selectedConversation)
-                )
                 .map((message) => {
                   const isSent = message.senderId === currentUser.id;
                   return (
@@ -2771,7 +2733,7 @@ function MessagesPage() {
                         <Avatar className="size-8">
                           <AvatarImage src={isSent ? currentUser.avatar_url || undefined : undefined} />
                           <AvatarFallback className="text-xs">
-                            {isSent ? currentUser.display_name[0] : conversations.find(c => c.userId === selectedConversation)?.userName[0]}
+                            {isSent ? currentUser.display_name[0] : selectedUser?.userName?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className={`px-4 py-2 rounded-2xl ${isSent ? 'bg-[#c4fc41] text-[#1a1f2e]' : 'bg-[#1e2433] text-white'}`}>
@@ -2911,17 +2873,15 @@ function MyRequestsPage() {
     queryKey: ['my-commission-requests', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
-      const requestOrm = CommissionRequestORM.getInstance();
-      const allRequests = await requestOrm.getAllCommissionRequest();
-      return allRequests.filter(r => r.poster_id === currentUser.id);
+      const res = await getMyRequests();
+      return res.requests || [];
     },
     enabled: !!currentUser,
   });
 
   const deleteRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const requestOrm = CommissionRequestORM.getInstance();
-      await requestOrm.deleteCommissionRequestById(requestId);
+      await deleteRequest(requestId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-commission-requests'] });
@@ -2951,7 +2911,7 @@ function MyRequestsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {requests.map((request) => (
+          {requests.map((request: CommissionRequestModel) => (
             <Card key={request.id} className="vgen-card p-6">
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
@@ -2961,7 +2921,7 @@ function MyRequestsPage() {
 
                 {request.sample_image_urls && request.sample_image_urls.length > 0 && (
                   <div className="grid grid-cols-2 gap-2">
-                    {request.sample_image_urls.slice(0, 2).map((url, idx) => (
+                    {request.sample_image_urls.slice(0, 2).map((url: string, idx: number) => (
                       <img key={idx} src={url} alt="" className="w-full h-24 object-cover rounded-lg" />
                     ))}
                   </div>
@@ -2971,7 +2931,7 @@ function MyRequestsPage() {
 
                 {request.tags && request.tags.length > 0 && (
                   <div className="flex gap-2 flex-wrap">
-                    {request.tags.slice(0, 3).map((tag, idx) => (
+                    {request.tags.slice(0, 3).map((tag: string, idx: number) => (
                       <Badge key={idx} variant="outline" className="text-xs text-[#a0a8b8]">
                         {tag}
                       </Badge>
@@ -3179,15 +3139,13 @@ function EditRequestDialog({ request, onClose }: { request: CommissionRequestMod
   const updateRequestMutation = useMutation({
     mutationFn: async () => {
       if (!currentUser) return;
-      const requestOrm = CommissionRequestORM.getInstance();
-      await requestOrm.setCommissionRequestById(request.id, {
-        ...request,
+      await updateRequest(request.id, {
         title,
         description,
         budget_min: parseInt(budgetMin) || 0,
         budget_max: parseInt(budgetMax) || 1000,
-        tags: tags.length > 0 ? tags : null,
-        sample_image_urls: images.length > 0 ? images : null,
+        tags: tags.length > 0 ? tags : undefined,
+        sample_image_urls: images.length > 0 ? images : undefined,
       });
     },
     onSuccess: () => {

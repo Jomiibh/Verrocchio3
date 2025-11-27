@@ -2,22 +2,15 @@ import mongoose from "mongoose";
 
 const CommissionRequestSchema = new mongoose.Schema(
   {
-    buyer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    posterId: { type: String, required: true },
     title: { type: String, required: true },
-    description: { type: String, required: true },
-    budgetMin: Number,
-    budgetMax: Number,
-    images: [String],
+    description: { type: String, default: "" },
+    budgetMin: { type: Number, default: 0 },
+    budgetMax: { type: Number, default: 0 },
+    timeframe: { type: String, default: "" },
+    status: { type: String, default: "open" },
     tags: [String],
-    timeframe: String, // e.g. "1-2 weeks"
-
-    status: {
-      type: String,
-      enum: ["open", "in_progress", "completed", "cancelled"],
-      default: "open"
-    },
-
-    assignedArtist: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    sampleImageUrls: [String],
   },
   { timestamps: true }
 );
