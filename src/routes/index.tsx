@@ -413,19 +413,20 @@ function SwipePage({
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const currentArtistData = artists[currentIndex];
-  const previousArtistData = currentIndex > 0 ? artists[currentIndex - 1] : null;
-  const nextArtistData = currentIndex < artists.length - 1 ? artists[currentIndex + 1] : null;
+  const filteredArtists = artists.filter((a) => (a.artist.portfolio_image_urls || []).length > 0);
+  const currentArtistData = filteredArtists[currentIndex];
+  const previousArtistData = currentIndex > 0 ? filteredArtists[currentIndex - 1] : null;
+  const nextArtistData = currentIndex < filteredArtists.length - 1 ? filteredArtists[currentIndex + 1] : null;
   const currentArtistImages = currentArtistData?.artist.portfolio_image_urls || [];
 
   const handleNext = () => {
-    if (currentIndex >= artists.length - 1 || isAnimating) return;
+    if (currentIndex >= filteredArtists.length - 1 || isAnimating) return;
 
     setDirection('right');
     setIsAnimating(true);
 
     setTimeout(() => {
-      setCurrentIndex((prev) => Math.min(artists.length - 1, prev + 1));
+      setCurrentIndex((prev) => Math.min(filteredArtists.length - 1, prev + 1));
       setCurrentImageIndex(0); // Reset to first image for next artist
       setIsAnimating(false);
     }, 250);
