@@ -530,6 +530,12 @@ function SwipePage({
 
   const { artist, user } = currentArtistData;
   const isLiked = likedArtists.has(artist.id);
+  const priceMin = artist.price_range_min ?? 0;
+  const priceMax = artist.price_range_max ?? 0;
+  const priceLabel =
+    priceMin > 0 || priceMax > 0
+      ? `$${priceMin} - $${priceMax}`
+      : "Not set";
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-12">
@@ -651,54 +657,65 @@ function SwipePage({
 
           {/* Image carousel - NOW BELOW PROFILE */}
           {currentArtistImages.length > 0 && (
-            <div className="relative aspect-[2/3] overflow-hidden">
-              <img
-                src={currentArtistImages[currentImageIndex]}
-                alt={`Slide ${currentImageIndex + 1}`}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative">
+              <div className="relative aspect-[2/3] overflow-hidden">
+                <img
+                  src={currentArtistImages[currentImageIndex]}
+                  alt={`Slide ${currentImageIndex + 1}`}
+                  className="w-full h-full object-cover"
+                />
 
-              {/* Image navigation */}
-              {currentArtistImages.length > 1 && (
-                <>
-                  {/* Left arrow */}
-                  {currentImageIndex > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePreviousImage();
-                      }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-all hover:scale-110"
-                    >
-                      <ChevronLeft className="size-6" />
-                    </button>
-                  )}
+                {/* Image navigation */}
+                {currentArtistImages.length > 1 && (
+                  <>
+                    {/* Left arrow */}
+                    {currentImageIndex > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreviousImage();
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-all hover:scale-110"
+                      >
+                        <ChevronLeft className="size-6" />
+                      </button>
+                    )}
 
-                  {/* Right arrow */}
-                  {currentImageIndex < currentArtistImages.length - 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleNextImage();
-                      }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-all hover:scale-110"
-                    >
-                      <ChevronRight className="size-6" />
-                    </button>
-                  )}
+                    {/* Right arrow */}
+                    {currentImageIndex < currentArtistImages.length - 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNextImage();
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-all hover:scale-110"
+                      >
+                        <ChevronRight className="size-6" />
+                      </button>
+                    )}
 
-                  {/* Image counter badge */}
-                  <div className="absolute top-4 right-4 bg-black/70 text-white text-sm font-semibold px-3 py-1.5 rounded-full">
-                    {currentImageIndex + 1} / {currentArtistImages.length}
+                    {/* Image counter badge */}
+                    <div className="absolute top-4 right-4 bg-black/70 text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+                      {currentImageIndex + 1} / {currentArtistImages.length}
+                    </div>
+                  </>
+                )}
+
+                {isLiked && (
+                  <div className="absolute top-4 left-4 bg-[#c4fc41] text-[#1a1f2e] rounded-full p-2">
+                    <Check className="size-6" />
                   </div>
-                </>
-              )}
+                )}
+              </div>
 
-              {isLiked && (
-                <div className="absolute top-4 left-4 bg-[#c4fc41] text-[#1a1f2e] rounded-full p-2">
-                  <Check className="size-6" />
+              {/* Metadata under image */}
+              <div className="p-6 pt-4 border-t border-[#2a3142] space-y-1">
+                <p className="text-sm text-white font-semibold truncate">{artist.bio || user.display_name}</p>
+                <div>
+                  <p className="text-sm text-[#a0a8b8]">Price Range</p>
+                  <p className="text-white font-semibold">{priceLabel}</p>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
