@@ -2743,6 +2743,8 @@ function MessagesPage() {
   const [messageInput, setMessageInput] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const queryClient = useQueryClient();
+  const CONVERSATION_POLL_MS = 5000;
+  const MESSAGE_POLL_MS = 2500;
 
   const SAVED_CONV_KEY = "selected_conversation_id";
   const SAVED_USER_KEY = "selected_conversation_user";
@@ -2819,6 +2821,8 @@ function MessagesPage() {
     enabled: !!currentUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: currentUser ? CONVERSATION_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => {
@@ -2848,6 +2852,8 @@ function MessagesPage() {
     enabled: !!selectedConversation,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: selectedConversation ? MESSAGE_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
   useEffect(() => {
     setLocalMessages(messages);
