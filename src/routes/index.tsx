@@ -2741,6 +2741,7 @@ function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<Conversation | null>(null);
   const [messageInput, setMessageInput] = useState("");
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const queryClient = useQueryClient();
 
   const SAVED_CONV_KEY = "selected_conversation_id";
@@ -2848,12 +2849,25 @@ function MessagesPage() {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
+  useEffect(() => {
+    setLocalMessages(messages);
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !currentUser || !selectedConversation || !selectedUser) return;
     const content = messageInput.trim();
     await sendMessage(selectedConversation, content);
     setMessageInput("");
+    setLocalMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        senderId: currentUser.id,
+        recipientId: selectedUser.userId,
+        content,
+        timestamp: Date.now(),
+      },
+    ]);
     queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] });
     queryClient.invalidateQueries({ queryKey: ['conversations', currentUser.id] });
   };
@@ -2918,7 +2932,7 @@ function MessagesPage() {
 
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages
+              {localMessages
                 .map((message: Message) => {
                   const isSent = message.senderId === currentUser.id;
                   return (
