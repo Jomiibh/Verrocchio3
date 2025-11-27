@@ -399,11 +399,11 @@ function SwipePage({
   setSelectedArtistForSlides: (data: { artist: ArtistProfileModel; user: UserModel } | null) => void;
 }) {
   const { currentUser } = useUser();
-  const { data: artists = [] } = useQuery({
+  const { data: artists = [] as { artist: ExtArtist; user: UserModel }[] } = useQuery({
     queryKey: ['all-artists-with-users'],
     queryFn: async () => {
       const res = await getArtists();
-      return (res.artists || []) as { artist: ArtistProfileModel; user: UserModel }[];
+      return (res.artists || []) as { artist: ExtArtist; user: UserModel }[];
     },
   });
 
@@ -417,8 +417,10 @@ function SwipePage({
   const currentArtistData = filteredArtists[currentIndex];
   const previousArtistData = currentIndex > 0 ? filteredArtists[currentIndex - 1] : null;
   const nextArtistData = currentIndex < filteredArtists.length - 1 ? filteredArtists[currentIndex + 1] : null;
-  const slides = currentArtistData?.artist.portfolio_slides || (currentArtistData?.artist.portfolio_image_urls || []).map((url: string) => ({ imageUrl: url }));
-  const currentArtistImages = slides.map((s: any) => s.imageUrl).filter(Boolean);
+  const slides: SlideMeta[] =
+    currentArtistData?.artist.portfolio_slides ||
+    (currentArtistData?.artist.portfolio_image_urls || []).map((url: string) => ({ imageUrl: url }));
+  const currentArtistImages = slides.map((s: SlideMeta) => s.imageUrl).filter(Boolean);
 
   const handleNext = () => {
     if (currentIndex >= filteredArtists.length - 1 || isAnimating) return;
@@ -533,12 +535,6 @@ function SwipePage({
   const currentSlide = slides[currentImageIndex] || null;
   const priceLabel = currentSlide?.priceRange?.trim() ? currentSlide.priceRange : "Not set";
   const isLiked = likedArtists.has(artist.id);
-  const priceMin = artist.price_range_min ?? 0;
-  const priceMax = artist.price_range_max ?? 0;
-  const priceLabel =
-    priceMin > 0 || priceMax > 0
-      ? `$${priceMin} - $${priceMax}`
-      : "Not set";
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-12">
@@ -790,6 +786,8 @@ function SwipePage({
 }
 
 type FeedPost = TimelinePostModel & { author?: any };
+type SlideMeta = { imageUrl: string; title?: string; priceRange?: string; tags?: string[] };
+type ExtArtist = ArtistProfileModel & { portfolio_slides?: SlideMeta[]; portfolio_image_urls?: string[]; price_range_min?: number; price_range_max?: number };
 
 function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) {
   const [selectedPost, setSelectedPost] = useState<TimelinePostModel | null>(null);
