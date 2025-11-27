@@ -828,7 +828,7 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
           gridAutoRows: '10px',
         }}
       >
-        {posts.map((post) => (
+        {posts.map((post: TimelinePostModel) => (
           <FeedTile
             key={post.id}
             post={post}
@@ -845,7 +845,7 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
         <PostDetailModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          relatedPosts={posts.filter(p => p.id !== selectedPost.id).slice(0, 6)}
+          relatedPosts={posts.filter((p: TimelinePostModel) => p.id !== selectedPost.id).slice(0, 6)}
           onLike={() => toggleLike(selectedPost.id)}
           isLiked={likedPosts.has(selectedPost.id)}
           setCurrentPage={setCurrentPage}
