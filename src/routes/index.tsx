@@ -2409,17 +2409,18 @@ function RequestsPage({
                   <Avatar
                     className="size-12 cursor-pointer"
                     onClick={() => {
+                      if (!request.poster) return;
                       setSelectedArtistForSlides?.(null);
                       setCurrentPage?.("profile");
                       sessionStorage.setItem("view_profile_user_id", request.poster.id);
                     }}
                   >
-                    <AvatarImage src={request.poster.avatar_url || undefined} />
-                    <AvatarFallback>{request.poster.display_name?.[0] || "?"}</AvatarFallback>
+                    <AvatarImage src={request.poster?.avatar_url || undefined} />
+                    <AvatarFallback>{request.poster?.display_name?.[0] || "?"}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-white font-semibold">{request.poster.display_name}</p>
-                    <p className="text-xs text-[#a0a8b8]">@{request.poster.username}</p>
+                    <p className="text-white font-semibold">{request.poster?.display_name}</p>
+                    <p className="text-xs text-[#a0a8b8]">@{request.poster?.username}</p>
                   </div>
                 </div>
               )}
