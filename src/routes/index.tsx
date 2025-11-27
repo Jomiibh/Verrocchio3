@@ -2623,7 +2623,7 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
         <h2 className="text-2xl font-bold text-white mb-6">Your Posts</h2>
         {userPosts.length > 0 ? (
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-            {userPosts.map((post) => (
+            {userPosts.map((post: TimelinePostModel) => (
               <Card key={post.id} className="vgen-card p-4">
                 {post.image_urls && post.image_urls[0] && (
                   <img src={post.image_urls[0]} alt="" className="w-full h-48 object-cover rounded-lg mb-3" />
