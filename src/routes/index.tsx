@@ -2656,7 +2656,7 @@ function MessagesPage() {
   }, [currentUser, queryClient]);
 
   // Load conversations from backend
-  const { data: conversations = [] } = useQuery<Conversation[]>({
+  const { data: conversations = [] as Conversation[] } = useQuery<Conversation[]>({
     queryKey: ['conversations', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
@@ -2673,18 +2673,20 @@ function MessagesPage() {
     enabled: !!currentUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    onSuccess: (transformed: Conversation[]) => {
-      if (!selectedConversation && transformed[0]) {
-        selectConversation(transformed[0]);
-      } else if (selectedConversation) {
-        const match = transformed.find((c: Conversation) => c.conversationId === selectedConversation);
-        if (match) selectConversation(match);
-      }
-    },
   });
 
+  useEffect(() => {
+    if (!conversations || conversations.length === 0) return;
+    if (!selectedConversation) {
+      selectConversation(conversations[0]);
+      return;
+    }
+    const match = conversations.find((c: Conversation) => c.conversationId === selectedConversation);
+    if (match) selectConversation(match);
+  }, [conversations, selectedConversation]);
+
   // Load messages for selected conversation
-  const { data: messages = [] } = useQuery<Message[]>({
+  const { data: messages = [] as Message[] } = useQuery<Message[]>({
     queryKey: ['messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
