@@ -2600,6 +2600,33 @@ function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const queryClient = useQueryClient();
 
+  const SAVED_CONV_KEY = "selected_conversation_id";
+  const SAVED_USER_KEY = "selected_conversation_user";
+
+  const selectConversation = (conv: Conversation) => {
+    const convId = conv.conversationId || conv.userId;
+    setSelectedConversation(convId);
+    setSelectedUser(conv);
+    try {
+      sessionStorage.setItem(SAVED_CONV_KEY, convId);
+      sessionStorage.setItem(SAVED_USER_KEY, JSON.stringify(conv));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  // Restore saved conversation on mount
+  useEffect(() => {
+    try {
+      const savedId = sessionStorage.getItem(SAVED_CONV_KEY);
+      const savedUserRaw = sessionStorage.getItem(SAVED_USER_KEY);
+      if (savedId) setSelectedConversation(savedId);
+      if (savedUserRaw) setSelectedUser(JSON.parse(savedUserRaw));
+    } catch {
+      // ignore
+    }
+  }, []);
+
   // If navigation set a pending participant, ensure a conversation exists and select it
   useEffect(() => {
     if (!currentUser) return;
@@ -2646,12 +2673,11 @@ function MessagesPage() {
       }));
       setConversations(transformed);
       if (!selectedConversation && transformed[0]) {
-        setSelectedConversation(transformed[0].conversationId);
-        setSelectedUser(transformed[0]);
+        selectConversation(transformed[0]);
       }
       if (selectedConversation) {
         const match = transformed.find((c: Conversation) => c.conversationId === selectedConversation);
-        if (match) setSelectedUser(match);
+        if (match) selectConversation(match);
       }
       return transformed;
     },
@@ -2718,8 +2744,7 @@ function MessagesPage() {
             <button
               key={conv.conversationId || conv.userId}
               onClick={() => {
-                setSelectedConversation(conv.conversationId || conv.userId);
-                setSelectedUser(conv);
+                selectConversation(conv);
               }}
               className={`
                 w-full p-4 flex items-center gap-3 border-b border-[#2a3142] transition-colors
