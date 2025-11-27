@@ -778,6 +778,8 @@ function SwipePage({
   );
 }
 
+type FeedPost = TimelinePostModel & { author?: any };
+
 function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) {
   const [selectedPost, setSelectedPost] = useState<TimelinePostModel | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -796,7 +798,7 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
         likes_count: p.likes || 0,
         create_time: p.createdAt ? `${new Date(p.createdAt).getTime()}` : `${Date.now()}`,
         author: p.author,
-      }));
+      })) as FeedPost[];
     },
   });
 
@@ -822,7 +824,7 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
 
       {/* Masonry-like grid (simple columns) */}
       <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-        {posts.map((post: TimelinePostModel) => (
+        {posts.map((post: FeedPost) => (
           <div key={post.id} className="break-inside-avoid">
             <FeedTile
               post={post}
@@ -850,19 +852,9 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
   );
 }
 
-function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: TimelinePostModel; onClick: () => void; onLike: () => void; isLiked: boolean; setCurrentPage: (page: Page) => void }) {
-  const [author, setAuthor] = useState<any>(null);
+function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: FeedPost; onClick: () => void; onLike: () => void; isLiked: boolean; setCurrentPage: (page: Page) => void }) {
   const [height, setHeight] = useState(20);
-
-  useQuery({
-    queryKey: ['user', post.author_id],
-    queryFn: async () => {
-      const userOrm = UserORM.getInstance();
-      const users = await userOrm.getUserById(post.author_id);
-      if (users[0]) setAuthor(users[0]);
-      return users[0];
-    },
-  });
+  const author = post.author || null;
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -878,7 +870,8 @@ function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: Ti
     setHeight(calculatedHeight);
   }, [hasImages]);
 
-  if (!author) return null;
+  const authorDisplay = author?.display_name || "User";
+  const authorAvatar = author?.avatar_url || undefined;
 
   return (
     <div
@@ -900,10 +893,10 @@ function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: Ti
                 onClick={handleProfileClick}
               >
                 <Avatar className="size-6">
-                  <AvatarImage src={author.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs">{author.display_name[0]}</AvatarFallback>
+                  <AvatarImage src={authorAvatar} />
+                  <AvatarFallback className="text-xs">{authorDisplay[0] || "?"}</AvatarFallback>
                 </Avatar>
-                <span className="text-white text-sm font-semibold">{author.display_name}</span>
+                <span className="text-white text-sm font-semibold">{authorDisplay}</span>
               </div>
               <p className="text-white text-sm line-clamp-2 mb-2">{post.body}</p>
               <button
@@ -926,10 +919,10 @@ function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: Ti
             onClick={handleProfileClick}
           >
             <Avatar className="size-6">
-              <AvatarImage src={author.avatar_url || undefined} />
-              <AvatarFallback className="text-xs">{author.display_name[0]}</AvatarFallback>
+              <AvatarImage src={authorAvatar} />
+              <AvatarFallback className="text-xs">{authorDisplay[0] || "?"}</AvatarFallback>
             </Avatar>
-            <span className="text-white text-sm font-semibold">{author.display_name}</span>
+            <span className="text-white text-sm font-semibold">{authorDisplay}</span>
           </div>
           <p className="text-white text-sm line-clamp-4 mb-2">{post.body}</p>
           <button
