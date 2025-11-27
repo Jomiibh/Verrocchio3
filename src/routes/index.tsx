@@ -820,23 +820,18 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
     <div className="px-6 py-12">
       <h1 className="text-4xl font-bold text-white mb-8 text-center">Feed</h1>
 
-      {/* Masonry grid */}
-      <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-          gridAutoRows: '10px',
-        }}
-      >
+      {/* Masonry-like grid (simple columns) */}
+      <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
         {posts.map((post: TimelinePostModel) => (
-          <FeedTile
-            key={post.id}
-            post={post}
-            onClick={() => setSelectedPost(post)}
-            onLike={() => toggleLike(post.id)}
-            isLiked={likedPosts.has(post.id)}
-            setCurrentPage={setCurrentPage}
-          />
+          <div key={post.id} className="break-inside-avoid">
+            <FeedTile
+              post={post}
+              onClick={() => setSelectedPost(post)}
+              onLike={() => toggleLike(post.id)}
+              isLiked={likedPosts.has(post.id)}
+              setCurrentPage={setCurrentPage}
+            />
+          </div>
         ))}
       </div>
 
