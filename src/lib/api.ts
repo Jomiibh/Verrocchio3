@@ -83,3 +83,14 @@ export async function updateProfile(input: {
     body: JSON.stringify(input),
   });
 }
+
+export async function getPosts() {
+  return apiFetch("/posts", { method: "GET" });
+}
+
+export async function createPost(input: { body: string; imageUrls: string[] }) {
+  return apiFetch("/posts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}

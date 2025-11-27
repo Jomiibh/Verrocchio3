@@ -18,14 +18,14 @@ import {
   ArrowLeft, ArrowRight
 } from "lucide-react";
 import { UserORM, UserRole, type UserModel } from "@/components/data/orm/orm_user";
-import { TimelinePostORM, type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
+import { type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
 import { ArtistProfileORM, type ArtistProfileModel } from "@/components/data/orm/orm_artist_profile";
 import { BuyerProfileORM } from "@/components/data/orm/orm_buyer_profile";
 import { CommissionRequestORM, type CommissionRequestModel } from "@/components/data/orm/orm_commission_request";
 import { ConversationORM, type ConversationModel } from "@/components/data/orm/orm_conversation";
 import { useCreaoFileUpload } from "@/hooks/use-creao-file-upload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile } from "@/lib/api";
+import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile, getPosts, createPost } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -786,9 +786,17 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
   const { data: posts = [] } = useQuery({
     queryKey: ['timeline-posts'],
     queryFn: async () => {
-      const timelineOrm = TimelinePostORM.getInstance();
-      const allPosts = await timelineOrm.getAllTimelinePost();
-      return allPosts.sort((a, b) => parseInt(b.create_time) - parseInt(a.create_time));
+      const res = await getPosts();
+      // Map to TimelinePostModel shape the UI expects
+      return (res.posts || []).map((p: any) => ({
+        id: p.id,
+        author_id: p.authorId,
+        body: p.body,
+        image_urls: p.imageUrls || [],
+        likes_count: p.likes || 0,
+        create_time: p.createdAt ? `${new Date(p.createdAt).getTime()}` : `${Date.now()}`,
+        author: p.author,
+      }));
     },
   });
 
@@ -804,22 +812,8 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
 
     setLikedPosts(newLikedPosts);
 
-    // Update the post in the database
-    const timelineOrm = TimelinePostORM.getInstance();
-    const postToUpdate = posts.find(p => p.id === postId);
-    if (postToUpdate) {
-      await timelineOrm.setTimelinePostById(postId, {
-        ...postToUpdate,
-        likes_count: isLiked ? postToUpdate.likes_count - 1 : postToUpdate.likes_count + 1,
-      });
-      queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
-
-      // Only notify the owner of the post when liked (not the liker)
-      // In a real app, this notification would be sent to the post owner's notification system
-      if (!isLiked) {
-        console.log(`Notification sent to post owner (ID: ${postToUpdate.author_id}): Your post was liked!`);
-      }
-    }
+    // Optimistic update only; backend like endpoint not implemented
+    queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
   };
 
   return (
@@ -1311,13 +1305,10 @@ function CreateFeedPostDialog({ onClose }: { onClose: () => void }) {
   const createPostMutation = useMutation({
     mutationFn: async () => {
       if (!currentUser) return;
-      const timelineOrm = TimelinePostORM.getInstance();
-      await timelineOrm.insertTimelinePost([{
-        author_id: currentUser.id,
+      await createPost({
         body,
-        image_urls: images.length > 0 ? images : null,
-        likes_count: 0,
-      } as any]);
+        imageUrls: images,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
@@ -2486,18 +2477,9 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
     queryKey: ['user-profile', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return null;
-
-      if (currentUser.role === UserRole.Artist) {
-        const artistOrm = ArtistProfileORM.getInstance();
-        const profiles = await artistOrm.getArtistProfileByUserId(currentUser.id);
-        if (profiles[0]) setProfile(profiles[0]);
-        return profiles[0];
-      } else {
-        const buyerOrm = BuyerProfileORM.getInstance();
-        const profiles = await buyerOrm.getBuyerProfileByUserId(currentUser.id);
-        if (profiles[0]) setProfile(profiles[0]);
-        return profiles[0];
-      }
+      const res = await getProfile();
+      setProfile(res.user);
+      return res.user;
     },
     enabled: !!currentUser,
   });
@@ -2506,13 +2488,20 @@ function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (pa
     queryKey: ['user-posts', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
-      const timelineOrm = TimelinePostORM.getInstance();
-      const allPosts = await timelineOrm.getAllTimelinePost();
-      const filtered = allPosts
-        .filter(post => post.author_id === currentUser.id)
-        .sort((a, b) => parseInt(b.create_time) - parseInt(a.create_time));
-      setUserPosts(filtered);
-      return filtered;
+      const res = await getPosts();
+      const mine = (res.posts || [])
+        .filter((p: any) => p.authorId === currentUser.id)
+        .map((p: any) => ({
+          id: p.id,
+          author_id: p.authorId,
+          body: p.body,
+          image_urls: p.imageUrls || [],
+          likes_count: p.likes || 0,
+          create_time: p.createdAt ? `${new Date(p.createdAt).getTime()}` : `${Date.now()}`,
+        }))
+        .sort((a: any, b: any) => parseInt(b.create_time) - parseInt(a.create_time));
+      setUserPosts(mine);
+      return mine;
     },
     enabled: !!currentUser,
   });
