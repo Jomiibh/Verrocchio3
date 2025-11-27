@@ -486,7 +486,13 @@ function SwipePage({
   const handleMessage = async () => {
     if (!currentArtistData || !currentUser) return;
 
-    await createConversation(currentArtistData.user.id);
+    // Defer conversation creation to Messages page; store pending target
+    try {
+      sessionStorage.setItem("pending_conversation_user_id", currentArtistData.user.id);
+    } catch {
+      // ignore storage errors
+    }
+    setCurrentPage('messages');
 
     // Add notification
     const avatarUrl: string | null = currentArtistData.user.avatar_url ?? null;
@@ -2002,8 +2008,11 @@ function ArtworkDetailModal({
   const handleMessage = async () => {
     if (!currentUser) return;
 
-    await createConversation(user.id);
-
+    try {
+      sessionStorage.setItem("pending_conversation_user_id", user.id);
+    } catch {
+      // ignore
+    }
     setCurrentPage('messages');
     onClose();
   };
