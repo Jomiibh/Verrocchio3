@@ -117,6 +117,7 @@ router.get("/artists", async (req, res) => {
         bio: user.bio || "",
         art_style_tags: user.artStyles || [],
         portfolio_image_urls: (user.slides || []).map((s) => s.imageUrl).filter(Boolean),
+        portfolio_slides: user.slides || [],
         price_range_min: user.priceMin || 0,
         price_range_max: user.priceMax || 0,
       },

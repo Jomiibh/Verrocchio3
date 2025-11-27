@@ -413,11 +413,12 @@ function SwipePage({
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const filteredArtists = artists.filter((a) => (a.artist.portfolio_image_urls || []).length > 0);
+  const filteredArtists = artists.filter((a) => (a.artist.portfolio_slides || a.artist.portfolio_image_urls || []).length > 0);
   const currentArtistData = filteredArtists[currentIndex];
   const previousArtistData = currentIndex > 0 ? filteredArtists[currentIndex - 1] : null;
   const nextArtistData = currentIndex < filteredArtists.length - 1 ? filteredArtists[currentIndex + 1] : null;
-  const currentArtistImages = currentArtistData?.artist.portfolio_image_urls || [];
+  const slides = currentArtistData?.artist.portfolio_slides || (currentArtistData?.artist.portfolio_image_urls || []).map((url: string) => ({ imageUrl: url }));
+  const currentArtistImages = slides.map((s: any) => s.imageUrl).filter(Boolean);
 
   const handleNext = () => {
     if (currentIndex >= filteredArtists.length - 1 || isAnimating) return;
@@ -529,6 +530,8 @@ function SwipePage({
   }
 
   const { artist, user } = currentArtistData;
+  const currentSlide = slides[currentImageIndex] || null;
+  const priceLabel = currentSlide?.priceRange?.trim() ? currentSlide.priceRange : "Not set";
   const isLiked = likedArtists.has(artist.id);
   const priceMin = artist.price_range_min ?? 0;
   const priceMax = artist.price_range_max ?? 0;
@@ -710,7 +713,7 @@ function SwipePage({
 
               {/* Metadata under image */}
               <div className="p-6 pt-4 border-t border-[#2a3142] space-y-1">
-                <p className="text-sm text-white font-semibold truncate">{artist.bio || user.display_name}</p>
+                <p className="text-sm text-white font-semibold truncate">{currentSlide?.title || user.display_name}</p>
                 <div>
                   <p className="text-sm text-[#a0a8b8]">Price Range</p>
                   <p className="text-white font-semibold">{priceLabel}</p>
@@ -718,12 +721,6 @@ function SwipePage({
               </div>
             </div>
           )}
-
-          {/* Price range - BELOW IMAGES */}
-          <div className="p-6 pt-4 border-t border-[#2a3142]">
-            <p className="text-sm text-[#a0a8b8] mb-1">Price Range</p>
-            <p className="text-white font-semibold">${artist.price_range_min} - ${artist.price_range_max}</p>
-          </div>
         </Card>
 
         {/* Right card - Next (blurred) */}
@@ -1184,8 +1181,12 @@ function AddToSlidesDialog({ onClose }: { onClose: () => void }) {
     if (!currentUser || images.length === 0) return;
 
     await updateProfile({
-      // append slides to current slides; backend will overwrite, so send slides list
-      slides: images.map((url) => ({ imageUrl: url, title: title || "", tags })),
+      slides: images.map((url) => ({
+        imageUrl: url,
+        title: title || "",
+        tags,
+        priceRange: priceRange || "",
+      })),
       artStyles: tags,
     });
 
