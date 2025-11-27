@@ -61,3 +61,25 @@ export async function registerApi(input: {
 export async function meApi() {
   return apiFetch("/auth/me", { method: "GET" });
 }
+
+export async function getProfile() {
+  return apiFetch("/users/me", { method: "GET" });
+}
+
+export async function updateProfile(input: {
+  display_name?: string;
+  bio?: string;
+  avatar_url?: string | null;
+  banner_url?: string | null;
+  social_links?: {
+    twitter?: string;
+    instagram?: string;
+    discord?: string;
+    other?: string;
+  };
+}) {
+  return apiFetch("/users/me", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}

@@ -9,21 +9,9 @@ export interface FileUploadInput {
 }
 
 export interface FileUploadResponse {
-  /**
-   * The permanent URL where the uploaded file can be accessed.
-   */
   fileUrl: string;
-  /**
-   * The S3 key (path) of the uploaded file.
-   */
   fileKey: string;
-  /**
-   * The original file name.
-   */
   fileName: string;
-  /**
-   * The MIME type of the uploaded file.
-   */
   contentType: string;
 }
 
@@ -69,7 +57,13 @@ export function useCreaoFileUpload(): UseMutationResult<
       const fileName = input.customFileName || input.file.name;
       const contentType = input.file.type || 'application/octet-stream';
 
-      const fileUrl = URL.createObjectURL(input.file);
+      // Convert to base64 data URL so it persists across reloads and can be stored in DB.
+      const fileUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(input.file);
+      });
 
       return {
         fileUrl,

@@ -25,7 +25,7 @@ import { CommissionRequestORM, type CommissionRequestModel } from "@/components/
 import { ConversationORM, type ConversationModel } from "@/components/data/orm/orm_conversation";
 import { useCreaoFileUpload } from "@/hooks/use-creao-file-upload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginApi, registerApi, saveAuthToken } from "@/lib/api";
+import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -1533,32 +1533,21 @@ function EditProfileDialog({ onClose }: { onClose: () => void }) {
   const uploadFile = useCreaoFileUpload();
   const queryClient = useQueryClient();
 
-  // Load current profile data
+  // Load current profile data from backend
   useQuery({
     queryKey: ['current-profile', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return null;
-
-      if (currentUser.role === UserRole.Artist) {
-        const artistOrm = ArtistProfileORM.getInstance();
-        const profiles = await artistOrm.getArtistProfileByUserId(currentUser.id);
-        if (profiles[0]) {
-          setBio(profiles[0].bio || "");
-          setBannerUrl(profiles[0].banner_image_url || "");
-          if (profiles[0].social_links) {
-            setTwitterHandle(profiles[0].social_links.twitter || "");
-            setInstagramHandle(profiles[0].social_links.instagram || "");
-          }
-        }
-        return profiles[0];
-      } else {
-        const buyerOrm = BuyerProfileORM.getInstance();
-        const profiles = await buyerOrm.getBuyerProfileByUserId(currentUser.id);
-        if (profiles[0]) {
-          setBio(profiles[0].bio || "");
-        }
-        return profiles[0];
+      const res = await getProfile();
+      const profile = res.user;
+      setBio(profile.bio || "");
+      setBannerUrl(profile.banner_url || "");
+      setAvatarUrl(profile.avatar_url || "");
+      if (profile.social_links) {
+        setTwitterHandle(profile.social_links.twitter || "");
+        setInstagramHandle(profile.social_links.instagram || "");
       }
+      return profile;
     },
     enabled: !!currentUser,
   });
@@ -1566,46 +1555,31 @@ function EditProfileDialog({ onClose }: { onClose: () => void }) {
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
       if (!currentUser) return;
-
-      // Update user
-      const userOrm = UserORM.getInstance();
-      await userOrm.setUserById(currentUser.id, {
-        ...currentUser,
+      const res = await updateProfile({
         display_name: displayName,
+        bio,
         avatar_url: avatarUrl || null,
+        banner_url: bannerUrl || null,
+        social_links: {
+          twitter: twitterHandle || "",
+          instagram: instagramHandle || "",
+        },
       });
-
-      // Update profile
-      if (currentUser.role === UserRole.Artist) {
-        const artistOrm = ArtistProfileORM.getInstance();
-        const profiles = await artistOrm.getArtistProfileByUserId(currentUser.id);
-        if (profiles[0]) {
-          await artistOrm.setArtistProfileById(profiles[0].id, {
-            ...profiles[0],
-            bio,
-            banner_image_url: bannerUrl || null,
-            social_links: {
-              twitter: twitterHandle || undefined,
-              instagram: instagramHandle || undefined,
-            },
-          });
-        }
-      } else {
-        const buyerOrm = BuyerProfileORM.getInstance();
-        const profiles = await buyerOrm.getBuyerProfileByUserId(currentUser.id);
-        if (profiles[0]) {
-          await buyerOrm.setBuyerProfileById(profiles[0].id, {
-            ...profiles[0],
-            bio,
-          });
-        }
-      }
-
-      // Refresh current user
-      const updatedUsers = await userOrm.getUserById(currentUser.id);
-      if (updatedUsers[0]) {
-        setCurrentUser(updatedUsers[0], true);
-      }
+      const updated = res.user;
+      const mapped: UserModel = {
+        id: updated.id,
+        display_name: updated.display_name,
+        avatar_url: updated.avatar_url || null,
+        role: updated.role ?? currentUser.role,
+        email: updated.email,
+        username: updated.username,
+        password_hash: "",
+        data_creator: "",
+        data_updater: "",
+        create_time: "",
+        update_time: "",
+      };
+      setCurrentUser(mapped, true);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
