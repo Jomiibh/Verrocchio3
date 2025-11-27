@@ -2596,8 +2596,6 @@ function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<Conversation | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
   const queryClient = useQueryClient();
 
   const SAVED_CONV_KEY = "selected_conversation_id";
@@ -2658,53 +2656,52 @@ function MessagesPage() {
   }, [currentUser, queryClient]);
 
   // Load conversations from backend
-  useQuery({
+  const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
       const res = await getConversations();
-      const transformed = (res.conversations || []).map((conv: any) => ({
+      return (res.conversations || []).map((conv: any) => ({
         userId: conv.other_user?.id || "",
         userName: conv.other_user?.display_name || "User",
         userAvatar: conv.other_user?.avatar_url || null,
         lastMessage: conv.last_message || "Start a conversation",
         timestamp: conv.last_message_time ? new Date(conv.last_message_time).getTime() : Date.now(),
         conversationId: conv.id,
-      }));
-      setConversations(transformed);
-      if (!selectedConversation && transformed[0]) {
-        selectConversation(transformed[0]);
-      }
-      if (selectedConversation) {
-        const match = transformed.find((c: Conversation) => c.conversationId === selectedConversation);
-        if (match) selectConversation(match);
-      }
-      return transformed;
+      })) as Conversation[];
     },
     enabled: !!currentUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    keepPreviousData: true,
+    onSuccess: (transformed) => {
+      if (!selectedConversation && transformed[0]) {
+        selectConversation(transformed[0]);
+      } else if (selectedConversation) {
+        const match = transformed.find((c: Conversation) => c.conversationId === selectedConversation);
+        if (match) selectConversation(match);
+      }
+    },
   });
 
   // Load messages for selected conversation
-  useQuery({
+  const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
-    const res = await getMessages(selectedConversation);
-    const msgs = (res.messages || []).map((m: any) => ({
-      id: m.id,
-      senderId: m.senderId,
-      recipientId: m.recipientId,
-      content: m.content,
+      const res = await getMessages(selectedConversation);
+      return (res.messages || []).map((m: any) => ({
+        id: m.id,
+        senderId: m.senderId,
+        recipientId: m.recipientId,
+        content: m.content,
         timestamp: new Date(m.createdAt || Date.now()).getTime(),
-      }));
-      setMessages(msgs);
-      return msgs;
+      })) as Message[];
     },
     enabled: !!selectedConversation,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    keepPreviousData: true,
   });
 
   const handleSendMessage = async () => {
@@ -2712,16 +2709,8 @@ function MessagesPage() {
     const content = messageInput.trim();
     await sendMessage(selectedConversation, content);
     setMessageInput("");
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        senderId: currentUser.id,
-        recipientId: selectedUser.userId,
-        content,
-        timestamp: Date.now(),
-      },
-    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', currentUser.id] });
   };
 
   if (!currentUser) {
