@@ -2598,6 +2598,37 @@ function MessagesPage() {
   const [messageInput, setMessageInput] = useState("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const queryClient = useQueryClient();
+
+  // If navigation set a pending participant, ensure a conversation exists and select it
+  useEffect(() => {
+    if (!currentUser) return;
+    const pending = sessionStorage.getItem("pending_conversation_user_id");
+    if (!pending) return;
+    (async () => {
+      try {
+        const res = await createConversation(pending);
+        const conv = res.conversation;
+        sessionStorage.removeItem("pending_conversation_user_id");
+        await queryClient.invalidateQueries({ queryKey: ['conversations', currentUser.id] });
+        if (conv) {
+          setSelectedConversation(conv.id);
+          setSelectedUser({
+            userId: conv.other_user?.id || pending,
+            userName: conv.other_user?.display_name || "User",
+            userAvatar: conv.other_user?.avatar_url || null,
+            lastMessage: conv.last_message || "Start a conversation",
+            timestamp: conv.last_message_time ? new Date(conv.last_message_time).getTime() : Date.now(),
+            conversationId: conv.id,
+          });
+        } else {
+          setSelectedConversation(pending);
+        }
+      } catch (err) {
+        console.error("Failed to open pending conversation", err);
+      }
+    })();
+  }, [currentUser, queryClient]);
 
   // Load conversations from backend
   useQuery({
@@ -2617,6 +2648,10 @@ function MessagesPage() {
       if (!selectedConversation && transformed[0]) {
         setSelectedConversation(transformed[0].conversationId);
         setSelectedUser(transformed[0]);
+      }
+      if (selectedConversation) {
+        const match = transformed.find((c: Conversation) => c.conversationId === selectedConversation);
+        if (match) setSelectedUser(match);
       }
       return transformed;
     },
