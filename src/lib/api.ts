@@ -94,3 +94,8 @@ export async function createPost(input: { body: string; imageUrls: string[] }) {
     body: JSON.stringify(input),
   });
 }
+
+export async function getArtists(search?: string) {
+  const qs = search ? `?q=${encodeURIComponent(search)}` : "";
+  return apiFetch(`/users/artists${qs}`, { method: "GET" });
+}

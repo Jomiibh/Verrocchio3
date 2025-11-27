@@ -25,7 +25,7 @@ import { CommissionRequestORM, type CommissionRequestModel } from "@/components/
 import { ConversationORM, type ConversationModel } from "@/components/data/orm/orm_conversation";
 import { useCreaoFileUpload } from "@/hooks/use-creao-file-upload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile, getPosts, createPost } from "@/lib/api";
+import { loginApi, registerApi, saveAuthToken, getProfile, updateProfile, getPosts, createPost, getArtists } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -2243,20 +2243,10 @@ function DiscoverPage({
   const [selectedArtwork, setSelectedArtwork] = useState<{ artist: ArtistProfileModel; user: UserModel; imageIndex: number } | null>(null);
 
   const { data: artists = [] } = useQuery({
-    queryKey: ['all-artists-with-users'],
+    queryKey: ['artists', searchQuery],
     queryFn: async () => {
-      const artistOrm = ArtistProfileORM.getInstance();
-      const userOrm = UserORM.getInstance();
-      const allArtists = await artistOrm.getAllArtistProfile();
-
-      const artistsWithUsers = await Promise.all(
-        allArtists.map(async (artist) => {
-          const users = await userOrm.getUserById(artist.user_id);
-          return { artist, user: users[0] };
-        })
-      );
-
-      return artistsWithUsers.filter(item => item.user);
+      const res = await getArtists(searchQuery.trim() || undefined);
+      return (res.artists || []) as { artist: ArtistProfileModel; user: UserModel }[];
     },
   });
 

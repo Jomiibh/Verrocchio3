@@ -72,3 +72,47 @@ router.put("/me", requireAuth, async (req, res) => {
 });
 
 export default router;
+
+// List artists with optional search (by display_name, username, artStyles)
+router.get("/artists", async (req, res) => {
+  try {
+    const { q } = req.query;
+    const query = { role: "artist" };
+
+    if (q && typeof q === "string") {
+      const regex = new RegExp(q, "i");
+      query.$or = [
+        { display_name: regex },
+        { username: regex },
+        { artStyles: regex },
+      ];
+    }
+
+    const artists = await User.find(query).limit(200);
+
+    const result = artists.map((user) => ({
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        display_name: user.display_name || "",
+        avatar_url: user.avatar_url || null,
+        bio: user.bio || "",
+      },
+      artist: {
+        id: user.id,
+        user_id: user.id,
+        bio: user.bio || "",
+        art_style_tags: user.artStyles || [],
+        portfolio_image_urls: (user.slides || []).map((s) => s.imageUrl).filter(Boolean),
+        price_range_min: user.priceMin || 0,
+        price_range_max: user.priceMax || 0,
+      },
+    }));
+
+    return res.json({ artists: result });
+  } catch (err) {
+    console.error("GET /users/artists error", err);
+    return res.status(500).json({ error: "Failed to load artists" });
+  }
+});
