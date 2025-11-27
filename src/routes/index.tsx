@@ -2397,7 +2397,7 @@ function RequestsPage({
     <div className="max-w-[1200px] mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold text-white mb-8">Commission Board</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {requests.map((request: CommissionRequestModel) => (
+        {requests.map((request: CommissionRequestModel & { poster?: UserModel }) => (
           <Card key={request.id} className="vgen-card p-6">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
