@@ -378,7 +378,7 @@ function MainContent({
       {currentPage === "home" && <SwipePage setCurrentPage={setCurrentPage} addNotification={addNotification} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
       {currentPage === "feed" && <FeedPage setCurrentPage={setCurrentPage} />}
       {currentPage === "discover" && <DiscoverPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
-      {currentPage === "requests" && <RequestsPage />}
+      {currentPage === "requests" && <RequestsPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
       {currentPage === "my-requests" && <MyRequestsPage />}
       {currentPage === "messages" && <MessagesPage />}
       {currentPage === "notifications" && <NotificationsPage notifications={notifications} markNotificationRead={markNotificationRead} markAllNotificationsRead={markAllNotificationsRead} setCurrentPage={setCurrentPage} />}
@@ -2384,6 +2384,14 @@ function RequestsPage({
   const [interestRequest, setInterestRequest] = useState<CommissionRequestModel | null>(null);
   const [interestMessage, setInterestMessage] = useState("");
   const [selectedProfileUser, setSelectedProfileUser] = useState<UserModel | null>(null);
+  const [interactedRequests, setInteractedRequests] = useState<Set<string>>(() => {
+    try {
+      const saved = sessionStorage.getItem("interacted_requests");
+      if (saved) return new Set(JSON.parse(saved));
+    } catch {}
+    return new Set();
+  });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { data: requests = [] } = useQuery({
     queryKey: ['commission-requests'],
@@ -2398,7 +2406,10 @@ function RequestsPage({
       <h1 className="text-4xl font-bold text-white mb-8">Commission Board</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {requests.map((request: CommissionRequestModel & { poster?: UserModel }) => (
-          <Card key={request.id} className="vgen-card p-6">
+          <Card
+            key={request.id}
+            className={`vgen-card p-6 transition-opacity ${interactedRequests.has(request.id) ? "opacity-60" : ""}`}
+          >
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <h3 className="text-xl font-bold text-white">{request.title}</h3>
@@ -2427,7 +2438,13 @@ function RequestsPage({
               {request.sample_image_urls && request.sample_image_urls.length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {request.sample_image_urls.slice(0, 2).map((url: string, idx: number) => (
-                    <img key={idx} src={url} alt="" className="w-full h-24 object-cover rounded-lg" />
+                    <img
+                      key={idx}
+                      src={url}
+                      alt=""
+                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
+                      onClick={() => setPreviewImage(url)}
+                    />
                   ))}
                 </div>
               )}
@@ -2476,13 +2493,23 @@ function RequestsPage({
                 disabled={!interestMessage.trim()}
                 onClick={async () => {
                   if (!currentUser || !interestRequest) return;
+                  const message = interestMessage.trim();
                   try {
                     sessionStorage.setItem("pending_conversation_user_id", interestRequest.poster_id);
                   } catch {}
-                  await createConversation(interestRequest.poster_id);
+                  try {
+                    const res = await createConversation(interestRequest.poster_id);
+                    const convId = res?.conversation?.id;
+                    if (convId && message) {
+                      await sendMessage(convId, message);
+                      sessionStorage.setItem("selected_conversation_id", convId);
+                    }
+                  } catch {
+                    // ignore
+                  }
                   setInterestRequest(null);
                   setInterestMessage("");
-                  // Optional: add a notification locally
+                  setCurrentPage?.("messages");
                 }}
               >
                 Send & Open DM
@@ -2491,6 +2518,14 @@ function RequestsPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {previewImage && (
+        <Dialog open onOpenChange={(open) => { if (!open) setPreviewImage(null); }}>
+          <DialogContent className="bg-[#0f1220] border-[#2a3142] max-w-4xl">
+            <img src={previewImage} alt="Preview" className="w-full h-full object-contain" />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
