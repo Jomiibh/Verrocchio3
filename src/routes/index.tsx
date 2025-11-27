@@ -2656,7 +2656,7 @@ function MessagesPage() {
   }, [currentUser, queryClient]);
 
   // Load conversations from backend
-  const { data: conversations = [] } = useQuery({
+  const { data: conversations = [] } = useQuery<Conversation[]>({
     queryKey: ['conversations', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
@@ -2673,8 +2673,7 @@ function MessagesPage() {
     enabled: !!currentUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    keepPreviousData: true,
-    onSuccess: (transformed) => {
+    onSuccess: (transformed: Conversation[]) => {
       if (!selectedConversation && transformed[0]) {
         selectConversation(transformed[0]);
       } else if (selectedConversation) {
@@ -2685,7 +2684,7 @@ function MessagesPage() {
   });
 
   // Load messages for selected conversation
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
@@ -2701,7 +2700,6 @@ function MessagesPage() {
     enabled: !!selectedConversation,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    keepPreviousData: true,
   });
 
   const handleSendMessage = async () => {
@@ -2729,7 +2727,7 @@ function MessagesPage() {
           <h2 className="text-xl font-bold text-white">Messages</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conv) => (
+          {conversations.map((conv: Conversation) => (
             <button
               key={conv.conversationId || conv.userId}
               onClick={() => {
@@ -2774,7 +2772,7 @@ function MessagesPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages
-                .map((message) => {
+                .map((message: Message) => {
                   const isSent = message.senderId === currentUser.id;
                   return (
                     <div key={message.id} className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
