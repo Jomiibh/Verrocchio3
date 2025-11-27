@@ -759,7 +759,7 @@ function SwipePage({
           </Button>
           <Button
             onClick={handleNext}
-            disabled={currentIndex >= artists.length - 1}
+            disabled={currentIndex >= filteredArtists.length - 1}
             size="lg"
             className="rounded-full size-16 border-2 border-[#a0a8b8] bg-[#a0a8b8]/10 hover:bg-[#a0a8b8]/20 text-[#a0a8b8] hover:text-white transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -769,7 +769,7 @@ function SwipePage({
 
       {/* Counter */}
       <p className="text-center text-[#a0a8b8]">
-        {currentIndex + 1} / {artists.length}
+        {currentIndex + 1} / {filteredArtists.length}
       </p>
     </div>
   );
