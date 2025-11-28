@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -412,7 +412,18 @@ function SwipePage({
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const filteredArtists = artists.filter((a) => (a.artist.portfolio_slides || a.artist.portfolio_image_urls || []).length > 0);
+  const filteredArtists = useMemo(() => {
+    const list = artists.filter(
+      (a) => (a.artist.portfolio_slides || a.artist.portfolio_image_urls || []).length > 0,
+    );
+    // Fisher-Yates shuffle for unbiased random order per load
+    for (let i = list.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }, [artists]);
+
   const currentArtistData = filteredArtists[currentIndex];
   const previousArtistData = currentIndex > 0 ? filteredArtists[currentIndex - 1] : null;
   const nextArtistData = currentIndex < filteredArtists.length - 1 ? filteredArtists[currentIndex + 1] : null;
