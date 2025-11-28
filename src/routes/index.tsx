@@ -225,6 +225,21 @@ function App() {
     }
   }, [currentPage]);
 
+  const goToUserProfile = (user: {
+    id: string;
+    display_name: string;
+    username: string;
+    avatar_url?: string | null;
+    role?: any;
+  }) => {
+    try {
+      sessionStorage.setItem("public_profile_user", JSON.stringify(user));
+    } catch {
+      // ignore
+    }
+    setCurrentPage("profile");
+  };
+
   return (
     <div className="min-h-screen flex">
       <ParallaxBackground mousePosition={mousePosition} />
@@ -243,6 +258,7 @@ function App() {
         addNotification={addNotification}
         selectedArtistForSlides={selectedArtistForSlides}
         setSelectedArtistForSlides={setSelectedArtistForSlides}
+        goToUserProfile={goToUserProfile}
       />
       <FloatingActionButton />
     </div>
@@ -459,6 +475,7 @@ function MainContent({
   addNotification,
   selectedArtistForSlides,
   setSelectedArtistForSlides,
+  goToUserProfile,
 }: {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
@@ -468,15 +485,16 @@ function MainContent({
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   selectedArtistForSlides: { artist: ArtistProfileModel; user: UserModel } | null;
   setSelectedArtistForSlides: (data: { artist: ArtistProfileModel; user: UserModel } | null) => void;
+  goToUserProfile: (user: UserModel | { id: string; display_name: string; username: string; avatar_url?: string | null; role?: any }) => void;
 }) {
   return (
     <main className="ml-[280px] flex-1 relative z-10">
-      {currentPage === "home" && <SwipePage setCurrentPage={setCurrentPage} addNotification={addNotification} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
-      {currentPage === "feed" && <FeedPage setCurrentPage={setCurrentPage} addNotification={addNotification} />}
-      {currentPage === "discover" && <DiscoverPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
+      {currentPage === "home" && <SwipePage setCurrentPage={setCurrentPage} addNotification={addNotification} setSelectedArtistForSlides={setSelectedArtistForSlides} goToUserProfile={goToUserProfile} />}
+      {currentPage === "feed" && <FeedPage setCurrentPage={setCurrentPage} addNotification={addNotification} goToUserProfile={goToUserProfile} />}
+      {currentPage === "discover" && <DiscoverPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} goToUserProfile={goToUserProfile} />}
       {currentPage === "requests" && <RequestsPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
       {currentPage === "my-requests" && <MyRequestsPage />}
-      {currentPage === "messages" && <MessagesPage />}
+      {currentPage === "messages" && <MessagesPage goToUserProfile={goToUserProfile} />}
       {currentPage === "notifications" && <NotificationsPage notifications={notifications} markNotificationRead={markNotificationRead} markAllNotificationsRead={markAllNotificationsRead} setCurrentPage={setCurrentPage} />}
       {currentPage === "profile" && <ProfilePage setCurrentPage={setCurrentPage} />}
       {currentPage === "settings" && <SettingsPage />}
@@ -488,11 +506,13 @@ function MainContent({
 function SwipePage({
   setCurrentPage,
   addNotification,
-  setSelectedArtistForSlides
+  setSelectedArtistForSlides,
+  goToUserProfile,
 }: {
   setCurrentPage: (page: Page) => void;
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   setSelectedArtistForSlides: (data: { artist: ArtistProfileModel; user: UserModel } | null) => void;
+  goToUserProfile: (user: UserModel) => void;
 }) {
   const { currentUser } = useUser();
   const { data: artists = [] as { artist: ExtArtist; user: UserModel }[] } = useQuery({
@@ -608,8 +628,7 @@ function SwipePage({
 
   const handleAvatarClick = () => {
     if (!currentArtistData) return;
-    setSelectedArtistForSlides(currentArtistData);
-    setCurrentPage('slides');
+    goToUserProfile(currentArtistData.user);
   };
 
   if (!currentArtistData) {
@@ -926,7 +945,7 @@ function saveComments(comments: StoredComments) {
   }
 }
 
-function FeedPage({ setCurrentPage, addNotification }: { setCurrentPage: (page: Page) => void; addNotification?: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void }) {
+function FeedPage({ setCurrentPage, addNotification, goToUserProfile }: { setCurrentPage: (page: Page) => void; addNotification?: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void; goToUserProfile: (user: UserModel | { id: string; display_name: string; username: string; avatar_url?: string | null; role?: any }) => void }) {
   const { currentUser } = useUser();
   const userKey = currentUser?.id ?? "guest";
   const [selectedPost, setSelectedPost] = useState<TimelinePostModel | null>(null);
@@ -1022,6 +1041,7 @@ function FeedPage({ setCurrentPage, addNotification }: { setCurrentPage: (page: 
               likeCount={(post.likes_count || 0) + (likedPosts.has(post.id) ? 1 : 0)}
               commentCount={(commentsByPost[post.id] || []).length}
               setCurrentPage={setCurrentPage}
+              goToUserProfile={goToUserProfile}
             />
           </div>
         ))}
@@ -1032,17 +1052,18 @@ function FeedPage({ setCurrentPage, addNotification }: { setCurrentPage: (page: 
         <PostDetailModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          relatedPosts={posts.filter((p: TimelinePostModel) => p.id !== selectedPost.id).slice(0, 6)}
-          onLike={() => handleLike(selectedPost as FeedPost)}
-          isLiked={likedPosts.has(selectedPost.id)}
-          likeCount={(selectedPost.likes_count || 0) + (likedPosts.has(selectedPost.id) ? 1 : 0)}
-          comments={commentsByPost[selectedPost.id] || []}
-          onAddComment={(text) => handleAddComment(selectedPost.id, text)}
-          setCurrentPage={setCurrentPage}
-        />
-      )}
-    </div>
-  );
+      relatedPosts={posts.filter((p: TimelinePostModel) => p.id !== selectedPost.id).slice(0, 6)}
+      onLike={() => handleLike(selectedPost as FeedPost)}
+      isLiked={likedPosts.has(selectedPost.id)}
+      likeCount={(selectedPost.likes_count || 0) + (likedPosts.has(selectedPost.id) ? 1 : 0)}
+      comments={commentsByPost[selectedPost.id] || []}
+      onAddComment={(text) => handleAddComment(selectedPost.id, text)}
+      setCurrentPage={setCurrentPage}
+      goToUserProfile={goToUserProfile}
+    />
+  )}
+</div>
+);
 }
 
 function FeedTile({
@@ -1053,6 +1074,7 @@ function FeedTile({
   likeCount,
   commentCount,
   setCurrentPage,
+  goToUserProfile,
 }: {
   post: FeedPost;
   onClick: () => void;
@@ -1061,6 +1083,7 @@ function FeedTile({
   likeCount: number;
   commentCount: number;
   setCurrentPage: (page: Page) => void;
+  goToUserProfile: (user: UserModel | { id: string; display_name: string; username: string; avatar_url?: string | null; role?: any }) => void;
 }) {
   const [height, setHeight] = useState(20);
   const author = post.author || null;
@@ -1099,7 +1122,23 @@ function FeedTile({
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div
                 className="flex items-center gap-2 mb-2 cursor-pointer hover:opacity-80"
-                onClick={handleProfileClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const authorUser = post.author
+                    ? {
+                        id: post.author.id,
+                        display_name: post.author.display_name,
+                        username: post.author.username,
+                        avatar_url: post.author.avatar_url,
+                        role: post.author.role,
+                      }
+                    : null;
+                  if (authorUser) {
+                    goToUserProfile(authorUser);
+                  } else {
+                    handleProfileClick(e);
+                  }
+                }}
               >
                 <Avatar className="size-6">
                   <AvatarImage src={authorAvatar} />
@@ -1132,7 +1171,23 @@ function FeedTile({
         <div className="bg-[#1e2433] p-4 h-full border border-[#2a3142] hover:border-[#c4fc41] transition-colors">
           <div
             className="flex items-center gap-2 mb-2 cursor-pointer hover:opacity-80"
-            onClick={handleProfileClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              const authorUser = post.author
+                ? {
+                    id: post.author.id,
+                    display_name: post.author.display_name,
+                    username: post.author.username,
+                    avatar_url: post.author.avatar_url,
+                    role: post.author.role,
+                  }
+                : null;
+              if (authorUser) {
+                goToUserProfile(authorUser);
+              } else {
+                handleProfileClick(e);
+              }
+            }}
           >
             <Avatar className="size-6">
               <AvatarImage src={authorAvatar} />
@@ -1172,7 +1227,8 @@ function PostDetailModal({
   likeCount,
   comments,
   onAddComment,
-  setCurrentPage
+  setCurrentPage,
+  goToUserProfile
 }: {
   post: TimelinePostModel;
   onClose: () => void;
@@ -1183,6 +1239,7 @@ function PostDetailModal({
   comments: Array<{ id: string; author: string; text: string; timestamp: number }>;
   onAddComment: (text: string) => void;
   setCurrentPage: (page: Page) => void;
+  goToUserProfile: (user: UserModel | { id: string; display_name: string; username: string; avatar_url?: string | null; role?: any }) => void;
 }) {
   const author = (post as any).author || null;
   if (!author) return null;
@@ -1202,11 +1259,21 @@ function PostDetailModal({
         {/* Main content */}
         <div className="lg:col-span-2">
           <Card className="vgen-card p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-start justify-between mb-6">
-              <div
-                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
-                onClick={handleProfileClick}
-              >
+        <div className="flex items-start justify-between mb-6">
+          <div
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
+            onClick={() => {
+              const authorUser = {
+                id: author.id,
+                display_name: author.display_name,
+                username: author.username,
+                avatar_url: author.avatar_url,
+                role: author.role,
+              };
+              goToUserProfile(authorUser);
+              onClose();
+            }}
+          >
                 <Avatar className="size-12">
                   <AvatarImage src={author.avatar_url || undefined} />
                   <AvatarFallback>{author.display_name[0]}</AvatarFallback>
@@ -2506,10 +2573,12 @@ function ArtworkDetailModal({
 
 function DiscoverPage({
   setCurrentPage,
-  setSelectedArtistForSlides
+  setSelectedArtistForSlides,
+  goToUserProfile
 }: {
   setCurrentPage: (page: Page) => void;
   setSelectedArtistForSlides: (data: { artist: ArtistProfileModel; user: UserModel } | null) => void;
+  goToUserProfile: (user: UserModel) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedArtwork, setSelectedArtwork] = useState<{ artist: ArtistProfileModel; user: UserModel; imageIndex: number } | null>(null);
@@ -2564,13 +2633,12 @@ function DiscoverPage({
           {filteredArtists.map(({ artist, user }) => (
             <Card key={artist.id} className="vgen-card p-6 hover:scale-105 transition-all">
               <div className="flex items-start gap-4 mb-4">
-                <Avatar
-                  className="size-16 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => {
-                    setSelectedArtistForSlides({ artist, user });
-                    setCurrentPage("slides");
-                  }}
-                >
+                  <Avatar
+                    className="size-16 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      goToUserProfile(user);
+                    }}
+                  >
                   <AvatarImage src={user.avatar_url || undefined} />
                   <AvatarFallback className="text-xl">{user.display_name[0]}</AvatarFallback>
                 </Avatar>
@@ -2624,11 +2692,10 @@ function DiscoverPage({
                   <p className="text-xs text-[#a0a8b8] mb-1">Price Range</p>
                   <p className="text-white font-semibold">${artist.price_range_min} - ${artist.price_range_max}</p>
                 </div>
-                {artist.portfolio_image_urls && artist.portfolio_image_urls.length > 0 && (
+                    {artist.portfolio_image_urls && artist.portfolio_image_urls.length > 0 && (
                   <Button
                     onClick={() => {
-                      setSelectedArtistForSlides({ artist, user });
-                      setCurrentPage("slides");
+                      goToUserProfile(user);
                     }}
                     className="w-full vgen-button-secondary text-sm"
                   >
@@ -2743,16 +2810,16 @@ function RequestsPage({
                   <p className="text-white font-semibold">${request.budget_min} - ${request.budget_max}</p>
                 </div>
                 <Button
-                  className="vgen-button-secondary px-4 text-sm"
-                  onClick={() => {
-                    setInterestRequest(request);
-                    setInterestMessage("");
-                  }}
-                >
-                  I'm Interested
-                </Button>
-              </div>
-            </div>
+              className="vgen-button-secondary px-4 text-sm"
+              onClick={() => {
+                setInterestRequest(request);
+                setInterestMessage("");
+              }}
+            >
+              I'm Interested
+            </Button>
+          </div>
+        </div>
           </Card>
         ))}
       </div>
@@ -2821,33 +2888,56 @@ function RequestsPage({
 function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void }) {
   const { currentUser } = useUser();
   const [profile, setProfile] = useState<any>(null);
+  const [viewUser, setViewUser] = useState<UserModel | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleMessageClick = async () => {
-    if (!currentUser || !setCurrentPage) return;
+    if (!viewUser || !currentUser || !setCurrentPage) return;
+    try {
+      sessionStorage.setItem("pending_conversation_user_id", viewUser.id);
+    } catch {
+      // ignore
+    }
     setCurrentPage('messages');
   };
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("public_profile_user");
+      if (raw) {
+        setViewUser(JSON.parse(raw));
+      } else {
+        setViewUser(currentUser);
+      }
+    } catch {
+      setViewUser(currentUser);
+    }
+  }, [currentUser]);
+
   useQuery({
-    queryKey: ['user-profile', currentUser?.id],
+    queryKey: ['user-profile', viewUser?.id],
     queryFn: async () => {
-      if (!currentUser) return null;
-      const res = await getProfile();
-      setProfile(res.user);
-      return res.user;
+      if (!viewUser) return null;
+      if (currentUser && viewUser.id === currentUser.id) {
+        const res = await getProfile();
+        setProfile(res.user);
+        return res.user;
+      }
+      setProfile(viewUser);
+      return viewUser;
     },
-    enabled: !!currentUser,
+    enabled: !!viewUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 
   const { data: userPosts = [] } = useQuery({
-    queryKey: ['user-posts', currentUser?.id],
+    queryKey: ['user-posts', viewUser?.id],
     queryFn: async () => {
-      if (!currentUser) return [];
+      if (!viewUser) return [];
       const res = await getPosts();
       return (res.posts || [])
-        .filter((p: any) => p.authorId === currentUser.id)
+        .filter((p: any) => p.authorId === viewUser.id)
         .map((p: any) => ({
           id: p.id,
           author_id: p.authorId,
@@ -2858,15 +2948,15 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
         }))
         .sort((a: any, b: any) => parseInt(b.create_time) - parseInt(a.create_time));
     },
-    enabled: !!currentUser,
+    enabled: !!viewUser,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 
-  if (!currentUser) {
+  if (!viewUser) {
     return (
       <div className="max-w-[800px] mx-auto px-6 py-12">
-        <p className="text-[#a0a8b8] text-center">Please sign in to view your profile</p>
+        <p className="text-[#a0a8b8] text-center">Please sign in to view profiles</p>
       </div>
     );
   }
@@ -2882,10 +2972,10 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{currentUser.display_name}</h1>
-                <p className="text-[#a0a8b8] mb-3">@{currentUser.username}</p>
-                <Badge className={currentUser.role === UserRole.Artist ? "vgen-badge-new" : "vgen-badge-open"}>
-                  {currentUser.role === UserRole.Artist ? "Artist" : "Buyer"}
+                <h1 className="text-3xl font-bold text-white mb-2">{viewUser.display_name}</h1>
+                <p className="text-[#a0a8b8] mb-3">@{viewUser.username}</p>
+                <Badge className={viewUser.role === UserRole.Artist ? "vgen-badge-new" : "vgen-badge-open"}>
+                  {viewUser.role === UserRole.Artist ? "Artist" : "Buyer"}
                 </Badge>
               </div>
               <div className="flex gap-2">
@@ -2898,13 +2988,15 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
                     Message
                   </Button>
                 )}
-                <Button
-                  onClick={() => setShowEditDialog(true)}
-                  className="vgen-button-secondary"
-                >
-                  <Edit3 className="size-4 mr-2" />
-                  Edit Profile
-                </Button>
+                {currentUser && viewUser.id === currentUser.id && (
+                  <Button
+                    onClick={() => setShowEditDialog(true)}
+                    className="vgen-button-secondary"
+                  >
+                    <Edit3 className="size-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -3010,7 +3102,7 @@ function SettingsPage() {
   );
 }
 
-function MessagesPage() {
+function MessagesPage({ goToUserProfile }: { goToUserProfile: (user: UserModel | { id: string; display_name: string; username: string; avatar_url?: string | null; role?: any }) => void }) {
   const { currentUser } = useUser();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<Conversation | null>(null);
@@ -3179,7 +3271,19 @@ function MessagesPage() {
                 ${selectedConversation === (conv.conversationId || conv.userId) ? 'bg-[#1e2433]' : 'hover:bg-[#1a1f2e]'}
               `}
             >
-              <Avatar className="size-12">
+              <Avatar
+                className="size-12"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToUserProfile({
+                    id: conv.userId,
+                    display_name: conv.userName,
+                    username: conv.userName,
+                    avatar_url: conv.userAvatar,
+                    role: null,
+                  });
+                }}
+              >
                 <AvatarImage src={conv.userAvatar || undefined} />
                 <AvatarFallback>{conv.userName[0]}</AvatarFallback>
               </Avatar>
@@ -3199,7 +3303,19 @@ function MessagesPage() {
             {/* Chat header */}
             <div className="p-4 border-b border-[#2a3142] bg-[#151827]">
               <div className="flex items-center gap-3">
-                <Avatar className="size-10">
+                <Avatar
+                  className="size-10"
+                  onClick={() => {
+                    if (!selectedUser) return;
+                    goToUserProfile({
+                      id: selectedUser.userId,
+                      display_name: selectedUser.userName,
+                      username: selectedUser.userName,
+                      avatar_url: selectedUser.userAvatar,
+                      role: null,
+                    });
+                  }}
+                >
                   <AvatarImage src={selectedUser?.userAvatar || undefined} />
                   <AvatarFallback>{selectedUser?.userName?.[0]}</AvatarFallback>
                 </Avatar>
