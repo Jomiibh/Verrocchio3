@@ -2966,8 +2966,8 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
       <Card className="vgen-card p-8 mb-6">
         <div className="flex items-start gap-6 mb-6">
           <Avatar className="size-24">
-            <AvatarImage src={currentUser.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl">{currentUser.display_name[0]}</AvatarFallback>
+            <AvatarImage src={viewUser.avatar_url || undefined} />
+            <AvatarFallback className="text-2xl">{viewUser.display_name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
@@ -3009,7 +3009,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
           </div>
         )}
 
-        {currentUser.role === UserRole.Artist && profile?.social_links && (
+        {viewUser.role === UserRole.Artist && profile?.social_links && (
           <div className="mb-6">
             <h3 className="text-white font-semibold mb-3">Social Links</h3>
             <div className="flex gap-3 flex-wrap">
@@ -3041,7 +3041,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
           </div>
         )}
 
-        {currentUser.role === UserRole.Artist && profile?.art_style_tags && profile.art_style_tags.length > 0 && (
+        {viewUser.role === UserRole.Artist && profile?.art_style_tags && profile.art_style_tags.length > 0 && (
           <div className="mb-6">
             <h3 className="text-white font-semibold mb-3">Art Styles</h3>
             <div className="flex gap-2 flex-wrap">
@@ -3052,7 +3052,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
           </div>
         )}
 
-        {currentUser.role === UserRole.Artist && profile?.portfolio_image_urls && profile.portfolio_image_urls.length > 0 && (
+        {viewUser.role === UserRole.Artist && profile?.portfolio_image_urls && profile.portfolio_image_urls.length > 0 && (
           <div>
             <h3 className="text-white font-semibold mb-3">Portfolio</h3>
             <div className="grid grid-cols-3 gap-3">
