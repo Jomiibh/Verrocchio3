@@ -92,10 +92,55 @@ interface ArtistSlidePost {
   priceRange?: string;
 }
 
+const NOTIFICATION_STORE_KEY = "verrocchio_notifications_by_user_v1";
+const LAST_MESSAGES_VISIT_KEY = "verrocchio_messages_last_visit";
+
+function loadNotificationsForUser(userId?: string | null): Notification[] {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_STORE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Record<string, Notification[]>;
+    return parsed[userId] || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveNotificationsForUser(userId: string, notifications: Notification[]) {
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_STORE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, Notification[]>) : {};
+    parsed[userId] = notifications;
+    localStorage.setItem(NOTIFICATION_STORE_KEY, JSON.stringify(parsed));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function queueNotificationForUser(
+  userId: string,
+  notification: Omit<Notification, "id" | "timestamp" | "read">,
+) {
+  const existing = loadNotificationsForUser(userId);
+  const enriched: Notification = {
+    ...notification,
+    id: Date.now().toString(),
+    timestamp: Date.now(),
+    read: false,
+  };
+  const next = [enriched, ...existing];
+  saveNotificationsForUser(userId, next);
+}
+
 function App() {
+  const { currentUser } = useUser();
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(() =>
+    loadNotificationsForUser(currentUser?.id),
+  );
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [selectedArtistForSlides, setSelectedArtistForSlides] = useState<{ artist: ArtistProfileModel; user: UserModel } | null>(null);
 
   useEffect(() => {
@@ -107,27 +152,78 @@ function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  useEffect(() => {
+    setNotifications(loadNotificationsForUser(currentUser?.id));
+  }, [currentUser]);
+
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-    setNotifications(prev => [
-      {
-        ...notification,
-        id: Date.now().toString(),
-        timestamp: Date.now(),
-        read: false,
-      },
-      ...prev,
-    ]);
+    if (!currentUser) return;
+    const next: Notification = {
+      ...notification,
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      read: false,
+    };
+    setNotifications((prev) => {
+      const updated = [next, ...prev];
+      saveNotificationsForUser(currentUser.id, updated);
+      return updated;
+    });
   };
 
   const markNotificationRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (!currentUser) return;
+    setNotifications(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      saveNotificationsForUser(currentUser.id, next);
+      return next;
+    });
   };
 
   const markAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (!currentUser) return;
+    setNotifications(prev => {
+      const next = prev.map(n => ({ ...n, read: true }));
+      saveNotificationsForUser(currentUser.id, next);
+      return next;
+    });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Conversations polling for unread badge
+  const { data: navConversations = [] } = useQuery({
+    queryKey: ['conversations-nav', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const res = await getConversations();
+      return res.conversations || [];
+    },
+    enabled: !!currentUser,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+  });
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadMessages(0);
+      return;
+    }
+    const lastVisit = Number(sessionStorage.getItem(LAST_MESSAGES_VISIT_KEY) || 0);
+    const count = navConversations.filter((conv: any) => {
+      if (!conv.last_message_time) return false;
+      const ts = new Date(conv.last_message_time).getTime();
+      return ts > lastVisit;
+    }).length;
+    setUnreadMessages(count);
+  }, [navConversations, currentUser]);
+
+  useEffect(() => {
+    if (currentPage === "messages") {
+      sessionStorage.setItem(LAST_MESSAGES_VISIT_KEY, Date.now().toString());
+      setUnreadMessages(0);
+    }
+  }, [currentPage]);
 
   return (
     <div className="min-h-screen flex">
@@ -136,6 +232,7 @@ function App() {
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         unreadNotifications={unreadCount}
+        unreadMessages={unreadMessages}
       />
       <MainContent
         currentPage={currentPage}
@@ -245,7 +342,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
   );
 }
 
-function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications }: { currentPage: Page; setCurrentPage: (page: Page) => void; unreadNotifications: number }) {
+function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadMessages }: { currentPage: Page; setCurrentPage: (page: Page) => void; unreadNotifications: number; unreadMessages: number }) {
   const { currentUser, logout } = useUser();
   const [showAuth, setShowAuth] = useState(false);
 
@@ -254,7 +351,7 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications }: { cur
     { id: "feed" as Page, icon: Grid3x3, label: "Feed" },
     { id: "discover" as Page, icon: Compass, label: "Discover Artists" },
     { id: "requests" as Page, icon: Briefcase, label: currentUser?.role === UserRole.Artist ? "Commission Board" : "My Requests", hideFor: currentUser?.role === UserRole.Buyer ? "commission-board" : undefined },
-    { id: "messages" as Page, icon: MessageCircle, label: "Messages" },
+    { id: "messages" as Page, icon: MessageCircle, label: "Messages", badge: unreadMessages },
     { id: "notifications" as Page, icon: Bell, label: "Notifications", badge: unreadNotifications },
     { id: "profile" as Page, icon: UserCircle, label: "Profile" },
     { id: "settings" as Page, icon: Settings, label: "Settings" },
@@ -871,14 +968,22 @@ function FeedPage({ setCurrentPage, addNotification }: { setCurrentPage: (page: 
     nextLiked.add(post.id);
     setLikedPosts(nextLiked);
 
-    if (addNotification && currentUser && post.author_id && post.author_id !== currentUser.id) {
-      const authorName = post.author?.display_name || post.author?.username || "Artist";
-      addNotification({
+    if (currentUser && post.author_id && post.author_id !== currentUser.id) {
+      queueNotificationForUser(post.author_id, {
         type: "like",
         fromUserId: currentUser.id,
         fromUserName: currentUser.display_name,
         fromUserAvatar: currentUser.avatar_url || null,
-        message: `${currentUser.display_name} liked ${authorName}'s post`,
+        message: `${currentUser.display_name} has liked your post!`,
+        linkTo: "notifications",
+      });
+    } else if (currentUser && post.author_id === currentUser.id) {
+      addNotification?.({
+        type: "like",
+        fromUserId: currentUser.id,
+        fromUserName: currentUser.display_name,
+        fromUserAvatar: currentUser.avatar_url || null,
+        message: `${currentUser.display_name} has liked your post!`,
         linkTo: "notifications",
       });
     }
@@ -1973,6 +2078,7 @@ function SignupForm({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.Buyer);
@@ -1984,6 +2090,9 @@ function SignupForm({ onClose }: { onClose: () => void }) {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
       const result = await registerApi({
         email,
         username,
@@ -2059,28 +2168,42 @@ function SignupForm({ onClose }: { onClose: () => void }) {
             className="bg-[#242b3d] border-[#2a3142] text-white pl-10"
           />
         </div>
-      </div>
+        </div>
 
-      <div>
-        <label className="text-sm text-[#a0a8b8] block mb-2">Password</label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#a0a8b8]" />
+        <div>
+          <label className="text-sm text-[#a0a8b8] block mb-2">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#a0a8b8]" />
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              className="bg-[#242b3d] border-[#2a3142] text-white pl-10 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a0a8b8] hover:text-white"
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm text-[#a0a8b8] block mb-2">Confirm Password</label>
           <Input
             type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a password"
-            className="bg-[#242b3d] border-[#2a3142] text-white pl-10 pr-10"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your password"
+            className="bg-[#242b3d] border-[#2a3142] text-white"
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a0a8b8] hover:text-white"
-          >
-            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </button>
+          {confirmPassword && confirmPassword !== password && (
+            <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+          )}
         </div>
-      </div>
 
       <div>
         <label className="text-sm text-[#a0a8b8] block mb-2">Display Name</label>
@@ -2133,7 +2256,15 @@ function SignupForm({ onClose }: { onClose: () => void }) {
 
       <Button
         onClick={() => createUserMutation.mutate()}
-        disabled={!email || !username || !password || !displayName || createUserMutation.isPending}
+        disabled={
+          !email ||
+          !username ||
+          !password ||
+          !confirmPassword ||
+          password !== confirmPassword ||
+          !displayName ||
+          createUserMutation.isPending
+        }
         className="w-full vgen-button-primary h-11"
       >
         {createUserMutation.isPending ? "Creating..." : "Create Account"}
