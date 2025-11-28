@@ -15,7 +15,7 @@ import {
   Mail, User, Lock, Eye, EyeOff, Twitter, Instagram, Globe, ExternalLink,
   Home, Grid3x3, Compass, Briefcase, UserCircle, Settings, Plus, X,
   Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar, DollarSign,
-  Clock, Paperclip, Smile, ArrowLeft, ArrowRight
+  Clock, Paperclip, Smile, Camera, MapPin, Star, ArrowLeft, ArrowRight
 } from "lucide-react";
 import { UserRole, type UserModel } from "@/components/data/orm/orm_user";
 import { type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
@@ -2975,6 +2975,14 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
   const [profile, setProfile] = useState<any>(null);
   const [viewUser, setViewUser] = useState<UserModel | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const fallbackPortfolio = useMemo(
+    () => [
+      "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800",
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
+      "https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?w=800",
+    ],
+    [],
+  );
 
   const handleMessageClick = async () => {
     if (!viewUser || !currentUser || !setCurrentPage) return;
@@ -3046,64 +3054,135 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     );
   }
 
+  const specialties = profile?.art_style_tags?.length ? profile.art_style_tags : ["Anime", "Manga", "Character Design", "Portrait", "Illustration", "Digital Art"];
+  const portfolioImages = profile?.portfolio_image_urls?.length ? profile.portfolio_image_urls : fallbackPortfolio;
+
   return (
-    <div className="max-w-[1000px] mx-auto px-6 py-12">
-      <Card className="vgen-card p-8 mb-6">
-        <div className="flex items-start gap-6 mb-6">
-          <Avatar className="size-24">
-            <AvatarImage src={viewUser.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl">{viewUser.display_name[0]}</AvatarFallback>
-          </Avatar>
+    <div className="max-w-[1200px] mx-auto px-6 py-10 space-y-10">
+      {/* Cover */}
+      <div className="relative rounded-2xl overflow-hidden border border-[#1b2348] bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff]">
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(#ffffff50 2px, transparent 2px)', backgroundSize: '28px 28px' }} />
+        <div className="absolute top-4 right-4">
+          {currentUser && viewUser.id === currentUser.id && (
+            <Button variant="secondary" className="bg-[#0c1026]/70 border border-white/20 text-white rounded-full h-10">
+              Change Cover
+            </Button>
+          )}
+        </div>
+        <div className="p-8 pt-14 text-center relative z-10">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-white">{viewUser.display_name}</h1>
+            <p className="text-sm text-[#d6def8]">@{viewUser.username}</p>
+          </div>
+          {profile?.bio && (
+            <p className="mt-4 text-white text-sm max-w-3xl mx-auto leading-relaxed">
+              {profile.bio}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Main panel */}
+      <div className="bg-[#0c1026] border border-[#1b2348] rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.35)] p-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
+          <div className="relative">
+            <Avatar className="size-28 border-4 border-[#121935] shadow-lg shadow-[#2cc7ff]/20">
+              <AvatarImage src={viewUser.avatar_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-[#9c6bff] to-[#2cc7ff] text-white text-3xl">
+                {viewUser.display_name[0]}
+              </AvatarFallback>
+            </Avatar>
+            {currentUser && viewUser.id === currentUser.id && (
+              <div className="absolute bottom-2 right-2 size-9 rounded-full bg-[#0c1026] border border-[#1b2348] flex items-center justify-center text-white">
+                <Camera className="size-4" />
+              </div>
+            )}
+          </div>
+
           <div className="flex-1">
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-[#9aa2c2]">
+              <MapPin className="size-4" />
+              <span>{profile?.location || "Unknown"}</span>
+              <span className="inline-block size-1.5 rounded-full bg-[#2a3055]" />
+              <Calendar className="size-4" />
+              <span>Joined {profile?.joined_at ? new Date(profile.joined_at).toLocaleDateString() : "recently"}</span>
+              <span className="inline-block size-1.5 rounded-full bg-[#2a3055]" />
+              <Star className="size-4 text-[#2ce1a9]" />
+              <span className="text-[#2ce1a9] font-medium">{profile?.rating || "4.9"} Rating</span>
+            </div>
+
+            <div className="flex flex-wrap gap-8 mt-4 text-white">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{viewUser.display_name}</h1>
-                <p className="text-[#a0a8b8] mb-3">@{viewUser.username}</p>
-                <Badge className={viewUser.role === UserRole.Artist ? "vgen-badge-new" : "vgen-badge-open"}>
-                  {viewUser.role === UserRole.Artist ? "Artist" : "Buyer"}
-                </Badge>
+                <p className="text-2xl font-semibold">{profile?.followers || "2.3K"}</p>
+                <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Followers</p>
               </div>
-              <div className="flex gap-2">
-                {setCurrentPage && (
-                  <Button
-                    onClick={handleMessageClick}
-                    className="vgen-button-primary"
-                  >
-                    <MessageCircle className="size-4 mr-2" />
-                    Message
-                  </Button>
-                )}
-                {currentUser && viewUser.id === currentUser.id && (
-                  <Button
-                    onClick={() => setShowEditDialog(true)}
-                    className="vgen-button-secondary"
-                  >
-                    <Edit3 className="size-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                )}
+              <div>
+                <p className="text-2xl font-semibold">{profile?.following || "842"}</p>
+                <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Following</p>
               </div>
+              <div>
+                <p className="text-2xl font-semibold">{profile?.commissions || "156"}</p>
+                <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Commissions</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-4 flex-wrap">
+              {currentUser && viewUser.id === currentUser.id && (
+                <Button onClick={() => setShowEditDialog(true)} className="rounded-full bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff] text-white border-none">
+                  Edit Profile
+                </Button>
+              )}
+              <Button variant="outline" className="rounded-full border-[#2a3055] text-white bg-[#121935]">
+                Share Profile
+              </Button>
+              {setCurrentPage && (
+                <Button
+                  onClick={handleMessageClick}
+                  className="rounded-full bg-[#121935] border border-[#2a3055] text-white"
+                >
+                  <MessageCircle className="size-4 mr-2" />
+                  Message
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
-        {profile?.bio && (
-          <div className="mb-6">
-            <h3 className="text-white font-semibold mb-2">Bio</h3>
-            <p className="text-[#a0a8b8]">{profile.bio}</p>
+        {/* Specialties */}
+        <div className="space-y-3">
+          <h3 className="text-white font-semibold text-lg">Specialties</h3>
+          <div className="flex flex-wrap gap-3">
+            {specialties.map((tag: string, idx: number) => (
+              <span key={idx} className="px-4 py-2 rounded-full bg-[#121935] text-white border border-[#1b2348]">
+                {tag}
+              </span>
+            ))}
           </div>
-        )}
+        </div>
 
+        {/* Portfolio */}
+        <div className="space-y-3">
+          <h3 className="text-white font-semibold text-lg">Portfolio</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {portfolioImages.map((url: string, idx: number) => (
+              <div key={idx} className="overflow-hidden rounded-xl border border-[#1b2348] bg-[#121935]">
+                <img src={url} alt="" className="w-full h-64 object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Social links */}
         {viewUser.role === UserRole.Artist && profile?.social_links && (
-          <div className="mb-6">
-            <h3 className="text-white font-semibold mb-3">Social Links</h3>
+          <div className="space-y-3">
+            <h3 className="text-white font-semibold text-lg">Social Links</h3>
             <div className="flex gap-3 flex-wrap">
               {profile.social_links.twitter && (
                 <a
                   href={`https://twitter.com/${profile.social_links.twitter}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-[#242b3d] rounded-lg text-[#a0a8b8] hover:text-[#c4fc41] hover:bg-[#2a3142] transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#121935] border border-[#1b2348] text-white hover:border-[#2cc7ff] transition"
                 >
                   <Twitter className="size-4" />
                   <span>Twitter</span>
@@ -3115,7 +3194,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
                   href={`https://instagram.com/${profile.social_links.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-[#242b3d] rounded-lg text-[#a0a8b8] hover:text-[#c4fc41] hover:bg-[#2a3142] transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#121935] border border-[#1b2348] text-white hover:border-[#2cc7ff] transition"
                 >
                   <Instagram className="size-4" />
                   <span>Instagram</span>
@@ -3125,29 +3204,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
             </div>
           </div>
         )}
-
-        {viewUser.role === UserRole.Artist && profile?.art_style_tags && profile.art_style_tags.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-white font-semibold mb-3">Art Styles</h3>
-            <div className="flex gap-2 flex-wrap">
-              {profile.art_style_tags.map((tag: string, idx: number) => (
-                <Badge key={idx} className="vgen-badge-open">{tag}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {viewUser.role === UserRole.Artist && profile?.portfolio_image_urls && profile.portfolio_image_urls.length > 0 && (
-          <div>
-            <h3 className="text-white font-semibold mb-3">Portfolio</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {profile.portfolio_image_urls.map((url: string, idx: number) => (
-                <img key={idx} src={url} alt="" className="w-full h-48 object-cover rounded-lg" />
-              ))}
-            </div>
-          </div>
-        )}
-      </Card>
+      </div>
 
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-6">Your Posts</h2>
