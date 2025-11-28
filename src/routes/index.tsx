@@ -26,7 +26,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   loginApi,
   registerApi,
-  saveAuthToken,
   getProfile,
   updateProfile,
   getPosts,
@@ -1732,10 +1731,7 @@ function LoginForm({ onClose }: { onClose: () => void }) {
         create_time: "",
         update_time: "",
       };
-      if (rememberMe) {
-        saveAuthToken(res.token);
-      }
-      setAuthToken(res.token);
+      setAuthToken(res.token, rememberMe);
       setCurrentUser(user, rememberMe);
       onClose();
     },
@@ -1848,10 +1844,7 @@ function SignupForm({ onClose }: { onClose: () => void }) {
         create_time: "",
         update_time: "",
       };
-      if (rememberMe) {
-        saveAuthToken(res.token);
-      }
-      setAuthToken(res.token);
+      setAuthToken(res.token, rememberMe);
       setCurrentUser(user, rememberMe);
       queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
       onClose();

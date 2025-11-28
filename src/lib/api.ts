@@ -1,16 +1,36 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 const TOKEN_KEY = "verrocchio_auth_token";
 
-export function saveAuthToken(token: string | null) {
-  if (!token) {
-    localStorage.removeItem(TOKEN_KEY);
-    return;
+export function saveAuthToken(token: string | null, remember = false) {
+  try {
+    if (!token) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+      return;
+    }
+
+    // Always keep sessionStorage so refreshes in this tab stay logged in
+    sessionStorage.setItem(TOKEN_KEY, token);
+
+    if (remember) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch (error) {
+    console.warn("Failed to persist auth token:", error);
   }
-  localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  try {
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY);
+    if (sessionToken) return sessionToken;
+    return localStorage.getItem(TOKEN_KEY);
+  } catch (error) {
+    console.warn("Failed to read auth token:", error);
+    return null;
+  }
 }
 
 async function apiFetch(path: string, options: RequestInit = {}) {
