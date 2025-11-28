@@ -241,7 +241,8 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex revamp-shell text-white relative overflow-hidden">
+      <div className="revamp-bg-overlay" />
       <ParallaxBackground mousePosition={mousePosition} />
       <LeftSidebar
         currentPage={currentPage}
@@ -275,7 +276,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(-45deg, #0F0B1E, #1a1235, #0F0B1E, #11122a, #0F0B1E)',
+          background: 'linear-gradient(-45deg, #0a0e27, #0f1435, #0a0d24, #0f1232, #0a0e27)',
           backgroundSize: '400% 400%',
           animation: 'gradientShift 30s ease-in-out infinite alternate',
         }}
@@ -297,8 +298,8 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '10%',
             width: '500px',
             height: '500px',
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
-            filter: 'blur(60px)',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, transparent 70%)',
+            filter: 'blur(70px)',
             animation: 'floatOrb1 35s ease-in-out infinite',
           }}
         />
@@ -310,8 +311,8 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             right: '15%',
             width: '450px',
             height: '450px',
-            background: 'radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%)',
-            filter: 'blur(70px)',
+            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%)',
+            filter: 'blur(80px)',
             animation: 'floatOrb2 40s ease-in-out infinite',
           }}
         />
@@ -323,8 +324,8 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '50%',
             width: '400px',
             height: '400px',
-            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
-            filter: 'blur(80px)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
+            filter: 'blur(85px)',
             animation: 'floatOrb3 45s ease-in-out infinite',
           }}
         />
@@ -336,8 +337,8 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '70%',
             width: '350px',
             height: '350px',
-            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%)',
-            filter: 'blur(65px)',
+            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%)',
+            filter: 'blur(75px)',
             animation: 'floatOrb4 38s ease-in-out infinite',
           }}
         />
@@ -348,8 +349,8 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             right: '60%',
             width: '380px',
             height: '380px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-            filter: 'blur(75px)',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
+            filter: 'blur(85px)',
             animation: 'floatOrb5 42s ease-in-out infinite',
           }}
         />
@@ -394,23 +395,23 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-[280px] border-r border-[#2a3142] flex flex-col z-40"
-      style={{
-        backgroundColor: 'rgba(15, 11, 30, 0.85)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-      }}
+      className="fixed left-0 top-0 h-screen w-[280px] revamp-sidebar flex flex-col z-40 overflow-hidden"
     >
+      <div className="revamp-sidebar-blob revamp-sidebar-blob--primary" />
+      <div className="revamp-sidebar-blob revamp-sidebar-blob--accent" />
+
       {/* Logo */}
-      <div className="p-6 border-b border-[#2a3142]">
+      <div className="p-6 border-b border-white/5 relative z-10">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentPage("home")}>
-          <Palette className="size-8 text-[#c4fc41]" />
-          <h1 className="text-xl font-bold text-white">Verrocchio</h1>
+          <div className="size-10 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#06b6d4] flex items-center justify-center shadow-lg shadow-[#6366f1]/40">
+            <Palette className="size-5 text-white" />
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-wide">Verrocchio</h1>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 relative z-10">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -420,17 +421,15 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
               className={`
-                w-full flex items-center gap-4 px-4 py-3 rounded-full text-left transition-all duration-150 relative
-                ${isActive
-                  ? 'bg-[#8B5CF6]/15 text-white font-semibold border-l-4 border-[#8B5CF6] pl-3'
-                  : 'text-[#9CA3AF] hover:bg-[#1f1a33] hover:text-white hover:scale-[1.02]'
-                }
+                w-full flex items-center gap-4 px-5 py-3 rounded-xl text-left transition-all duration-200 relative revamp-nav-button
+                ${isActive ? 'revamp-nav-button--active font-semibold' : ''}
               `}
             >
-              <Icon className="size-6 transition-all duration-150" />
+              {isActive && <span className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-[2px] rounded-full bg-gradient-to-b from-[#6366f1] via-[#8b5cf6] to-[#06b6d4]" />}
+              <Icon className={`size-6 transition-all duration-150 ${isActive ? 'text-[#c4fc41]' : ''}`} />
               <span className="text-base flex-1">{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full size-5 flex items-center justify-center animate-pulse">
+                <span className="revamp-badge">
                   {item.badge > 9 ? '9+' : item.badge}
                 </span>
               )}
@@ -440,7 +439,7 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-[#2a3142]">
+      <div className="p-4 border-t border-white/5 relative z-10">
         {currentUser ? (
           <div className="flex items-center gap-3">
             <Avatar className="size-10">

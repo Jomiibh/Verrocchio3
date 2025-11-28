@@ -1,6 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["agent/**/*"],
+  "exclude": ["agent/**/*", "REVAMPUI/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
