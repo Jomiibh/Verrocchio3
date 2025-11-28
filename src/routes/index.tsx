@@ -15,7 +15,7 @@ import {
   Mail, User, Lock, Eye, EyeOff, Twitter, Instagram, Globe, ExternalLink,
   Home, Grid3x3, Compass, Briefcase, UserCircle, Settings, Plus, X,
   Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar, DollarSign,
-  ArrowLeft, ArrowRight
+  Clock, ArrowLeft, ArrowRight
 } from "lucide-react";
 import { UserRole, type UserModel } from "@/components/data/orm/orm_user";
 import { type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
@@ -2766,7 +2766,7 @@ function RequestsPage({
 
   const filteredRequests = useMemo(() => {
     return (requests as (CommissionRequestModel & { poster?: UserModel })[]).filter((request) => {
-      const status = (request.status || '').toLowerCase();
+      const status = String(request.status || '').toLowerCase();
       const tags = (request.tags || []).map((t) => t.toLowerCase());
       const isUrgent = status.includes('urgent') || tags.includes('urgent');
       const isHighBudget = (request.budget_max || 0) >= 300;
@@ -2825,7 +2825,7 @@ function RequestsPage({
                     <h3 className="text-xl font-semibold text-white">{request.title}</h3>
                     <p className="text-sm text-[#a7b3d4]">{request.description}</p>
                   </div>
-                  {((request.status || '').toLowerCase().includes('urgent') || (request.tags || []).some((t) => t.toLowerCase() === 'urgent')) && (
+                  {((String(request.status || '')).toLowerCase().includes('urgent') || (request.tags || []).some((t) => t.toLowerCase() === 'urgent')) && (
                     <span className="px-3 py-1 rounded-full bg-[#5f2336] text-[#f6c1cd] text-sm border border-[#8a2c46]">
                       Urgent
                     </span>
@@ -2854,16 +2854,16 @@ function RequestsPage({
 
                 {request.sample_image_urls && request.sample_image_urls.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {request.sample_image_urls.slice(0, 3).map((url: string, idx: number) => (
+                    {(request.sample_image_urls ?? []).slice(0, 3).map((url: string, idx: number) => (
                       <div
                         key={idx}
                         className="relative rounded-xl overflow-hidden border border-[#1b2348] hover:border-[#2cc7ff]/40 cursor-pointer transition"
                         onClick={() => setPreviewImage(url)}
                       >
                         <img src={url} alt="" className="w-full h-24 object-cover" />
-                        {idx === 2 && request.sample_image_urls.length > 3 && (
+                        {idx === 2 && (request.sample_image_urls?.length || 0) > 3 && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-semibold">
-                            +{request.sample_image_urls.length - 3}
+                            +{(request.sample_image_urls?.length || 0) - 3}
                           </div>
                         )}
                       </div>
