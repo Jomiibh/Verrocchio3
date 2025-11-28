@@ -371,6 +371,10 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
 function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadMessages }: { currentPage: Page; setCurrentPage: (page: Page) => void; unreadNotifications: number; unreadMessages: number }) {
   const { currentUser, logout } = useUser();
   const [showAuth, setShowAuth] = useState(false);
+  const confirmLogout = () => {
+    const confirmed = window.confirm("Are you sure you want to log out?");
+    if (confirmed) logout();
+  };
 
   const navItems = [
     { id: "home" as Page, icon: Home, label: "Home" },
@@ -453,7 +457,7 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
             <Button
               variant="ghost"
               size="icon"
-              onClick={logout}
+              onClick={confirmLogout}
               className="text-[#a0a8b8] hover:text-white"
             >
               <ExternalLink className="size-4" />
@@ -2975,14 +2979,13 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
   const [profile, setProfile] = useState<any>(null);
   const [viewUser, setViewUser] = useState<UserModel | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const fallbackPortfolio = useMemo(
-    () => [
-      "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800",
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
-      "https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?w=800",
-    ],
-    [],
-  );
+  const [specialtyInput, setSpecialtyInput] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadFile = useCreaoFileUpload();
 
   const handleMessageClick = async () => {
     if (!viewUser || !currentUser || !setCurrentPage) return;
@@ -3024,6 +3027,72 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     refetchOnReconnect: true,
   });
 
+  useEffect(() => {
+    if (profile?.art_style_tags) {
+      setSpecialties(profile.art_style_tags);
+    }
+  }, [profile]);
+
+  const handleAddSpecialty = async () => {
+    if (!currentUser || !specialtyInput.trim()) return;
+    const next = Array.from(new Set([...specialties, specialtyInput.trim()]));
+    setSpecialties(next);
+    setSpecialtyInput("");
+    await updateProfile({
+      art_style_tags: next,
+    });
+  };
+
+  const handleRemoveSpecialty = async (tag: string) => {
+    if (!currentUser) return;
+    const next = specialties.filter((t) => t !== tag);
+    setSpecialties(next);
+    await updateProfile({
+      art_style_tags: next,
+    });
+  };
+
+  const handleShareProfile = async () => {
+    if (!viewUser) return;
+    const link = `${window.location.origin}?profile=${viewUser.id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      alert("Profile link copied to clipboard.");
+    } catch {
+      alert(link);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentUser) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const result = await uploadFile.mutateAsync({ file });
+      await updateProfile({ avatar_url: result.fileUrl });
+      setProfile((prev: any) => ({ ...prev, avatar_url: result.fileUrl }));
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentUser) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCover(true);
+    try {
+      const result = await uploadFile.mutateAsync({ file });
+      await updateProfile({ cover_image_url: result.fileUrl });
+      setProfile((prev: any) => ({ ...prev, cover_image_url: result.fileUrl }));
+    } finally {
+      setIsUploadingCover(false);
+      e.target.value = "";
+    }
+  };
+
   const { data: userPosts = [] } = useQuery({
     queryKey: ['user-posts', viewUser?.id],
     queryFn: async () => {
@@ -3054,19 +3123,35 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     );
   }
 
-  const specialties = profile?.art_style_tags?.length ? profile.art_style_tags : ["Anime", "Manga", "Character Design", "Portrait", "Illustration", "Digital Art"];
-  const portfolioImages = profile?.portfolio_image_urls?.length ? profile.portfolio_image_urls : fallbackPortfolio;
-
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-10 space-y-10">
+      <input type="file" accept="image/*" ref={avatarInputRef} className="hidden" onChange={handleAvatarUpload} />
+      <input type="file" accept="image/*" ref={coverInputRef} className="hidden" onChange={handleCoverUpload} />
       {/* Cover */}
-      <div className="relative rounded-2xl overflow-hidden border border-[#1b2348] bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff]">
+      <div
+        className="relative rounded-2xl overflow-hidden border border-[#1b2348]"
+        style={{
+          backgroundImage: profile?.cover_image_url
+            ? `url(${profile.cover_image_url})`
+            : 'linear-gradient(90deg, #9c6bff, #6c7bff, #2cc7ff)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(#ffffff50 2px, transparent 2px)', backgroundSize: '28px 28px' }} />
         <div className="absolute top-4 right-4">
           {currentUser && viewUser.id === currentUser.id && (
-            <Button variant="secondary" className="bg-[#0c1026]/70 border border-white/20 text-white rounded-full h-10">
-              Change Cover
-            </Button>
+            <div className="space-y-1 text-right">
+              <Button
+                variant="secondary"
+                className="bg-[#0c1026]/70 border border-white/20 text-white rounded-full h-10"
+                onClick={() => coverInputRef.current?.click()}
+                disabled={isUploadingCover}
+              >
+                {isUploadingCover ? "Uploading..." : "Change Cover"}
+              </Button>
+              <p className="text-[11px] text-white/80">Min 1200x300, 4:1 aspect</p>
+            </div>
           )}
         </div>
         <div className="p-8 pt-14 text-center relative z-10">
@@ -3093,9 +3178,14 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
               </AvatarFallback>
             </Avatar>
             {currentUser && viewUser.id === currentUser.id && (
-              <div className="absolute bottom-2 right-2 size-9 rounded-full bg-[#0c1026] border border-[#1b2348] flex items-center justify-center text-white">
+              <button
+                className="absolute bottom-2 right-2 size-9 rounded-full bg-[#0c1026] border border-[#1b2348] flex items-center justify-center text-white hover:border-[#2cc7ff]"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                title="Change avatar"
+              >
                 <Camera className="size-4" />
-              </div>
+              </button>
             )}
           </div>
 
@@ -3113,16 +3203,12 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
 
             <div className="flex flex-wrap gap-8 mt-4 text-white">
               <div>
-                <p className="text-2xl font-semibold">{profile?.followers || "2.3K"}</p>
+                <p className="text-2xl font-semibold">{profile?.followers_count ?? profile?.followers ?? 0}</p>
                 <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Followers</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold">{profile?.following || "842"}</p>
+                <p className="text-2xl font-semibold">{profile?.following_count ?? profile?.following ?? 0}</p>
                 <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Following</p>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold">{profile?.commissions || "156"}</p>
-                <p className="text-xs uppercase tracking-wide text-[#9aa2c2]">Commissions</p>
               </div>
             </div>
 
@@ -3132,7 +3218,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
                   Edit Profile
                 </Button>
               )}
-              <Button variant="outline" className="rounded-full border-[#2a3055] text-white bg-[#121935]">
+              <Button variant="outline" className="rounded-full border-[#2a3055] text-white bg-[#121935]" onClick={handleShareProfile}>
                 Share Profile
               </Button>
               {setCurrentPage && (
@@ -3152,24 +3238,34 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
         <div className="space-y-3">
           <h3 className="text-white font-semibold text-lg">Specialties</h3>
           <div className="flex flex-wrap gap-3">
+            {(!specialties || specialties.length === 0) && (
+              <p className="text-sm text-[#9aa2c2]">Add your specialties</p>
+            )}
             {specialties.map((tag: string, idx: number) => (
-              <span key={idx} className="px-4 py-2 rounded-full bg-[#121935] text-white border border-[#1b2348]">
+              <span key={idx} className="px-4 py-2 rounded-full bg-[#121935] text-white border border-[#1b2348] flex items-center gap-2">
                 {tag}
+                {currentUser && viewUser.id === currentUser.id && (
+                  <button onClick={() => handleRemoveSpecialty(tag)} className="text-[#9aa2c2] hover:text-white">
+                    <X className="size-3" />
+                  </button>
+                )}
               </span>
             ))}
           </div>
-        </div>
-
-        {/* Portfolio */}
-        <div className="space-y-3">
-          <h3 className="text-white font-semibold text-lg">Portfolio</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {portfolioImages.map((url: string, idx: number) => (
-              <div key={idx} className="overflow-hidden rounded-xl border border-[#1b2348] bg-[#121935]">
-                <img src={url} alt="" className="w-full h-64 object-cover" />
-              </div>
-            ))}
-          </div>
+          {currentUser && viewUser.id === currentUser.id && (
+            <div className="flex gap-2 flex-wrap">
+              <Input
+                value={specialtyInput}
+                onChange={(e) => setSpecialtyInput(e.target.value)}
+                placeholder="Add a specialty"
+                className="w-64 bg-[#121935] border-[#1b2348] text-white"
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSpecialty())}
+              />
+              <Button onClick={handleAddSpecialty} disabled={!specialtyInput.trim()} className="bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff] text-white">
+                Add
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Social links */}
