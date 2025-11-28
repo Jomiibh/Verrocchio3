@@ -14,7 +14,7 @@ import {
   Check, MessageCircle, Palette, ShoppingBag, Send, Upload, ChevronLeft, ChevronRight,
   Mail, User, Lock, Eye, EyeOff, Twitter, Instagram, Globe, ExternalLink,
   Home, Grid3x3, Compass, Briefcase, UserCircle, Settings, Plus, X,
-  Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar,
+  Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar, DollarSign,
   ArrowLeft, ArrowRight
 } from "lucide-react";
 import { UserRole, type UserModel } from "@/components/data/orm/orm_user";
@@ -2746,7 +2746,6 @@ function RequestsPage({
   const { currentUser } = useUser();
   const [interestRequest, setInterestRequest] = useState<CommissionRequestModel | null>(null);
   const [interestMessage, setInterestMessage] = useState("");
-  const [selectedProfileUser, setSelectedProfileUser] = useState<UserModel | null>(null);
   const [interactedRequests, setInteractedRequests] = useState<Set<string>>(() => {
     try {
       const saved = sessionStorage.getItem("interacted_requests");
@@ -2755,6 +2754,7 @@ function RequestsPage({
     return new Set();
   });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'urgent' | 'high' | 'quick'>('all');
 
   const { data: requests = [] } = useQuery({
     queryKey: ['commission-requests'],
@@ -2764,70 +2764,147 @@ function RequestsPage({
     },
   });
 
+  const filteredRequests = useMemo(() => {
+    return (requests as (CommissionRequestModel & { poster?: UserModel })[]).filter((request) => {
+      const status = (request.status || '').toLowerCase();
+      const tags = (request.tags || []).map((t) => t.toLowerCase());
+      const isUrgent = status.includes('urgent') || tags.includes('urgent');
+      const isHighBudget = (request.budget_max || 0) >= 300;
+      const isQuick = (request.budget_min || 0) <= 120 || tags.includes('quick');
+
+      if (activeFilter === 'urgent') return isUrgent;
+      if (activeFilter === 'high') return isHighBudget;
+      if (activeFilter === 'quick') return isQuick;
+      return true;
+    });
+  }, [requests, activeFilter]);
+
+  const filters = [
+    { id: 'all' as const, label: 'All Commissions' },
+    { id: 'urgent' as const, label: 'Urgent' },
+    { id: 'high' as const, label: 'High Budget' },
+    { id: 'quick' as const, label: 'Quick Jobs' },
+  ];
+
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold text-white mb-8">Commission Board</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {requests.map((request: CommissionRequestModel & { poster?: UserModel }) => (
+    <div className="max-w-6xl mx-auto px-6 py-12 space-y-8">
+      <div className="space-y-3">
+        <h1 className="text-4xl font-bold text-[#c7d2ff]">
+          Commission Board
+        </h1>
+        <p className="text-[#9aa2c2]">Browse available commission requests</p>
+        <div className="flex gap-3 flex-wrap">
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              className={`px-4 py-2 rounded-full border text-sm transition-all ${
+                activeFilter === filter.id
+                  ? 'bg-gradient-to-r from-[#9c6bff] to-[#2cc7ff] text-white border-transparent shadow-lg shadow-[#2cc7ff]/25'
+                  : 'bg-[#111735] border-transparent text-[#cbd5e1] hover:bg-[#1a2140]'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        {filteredRequests.map((request: CommissionRequestModel & { poster?: UserModel }) => (
           <Card
             key={request.id}
-            className={`vgen-card p-6 transition-opacity ${interactedRequests.has(request.id) ? "opacity-60" : ""}`}
+            className={`p-6 rounded-2xl bg-[#0c1026] border border-[#1b2348] shadow-[0_18px_45px_rgba(0,0,0,0.35)] hover:border-[#2cc7ff]/40 transition-all ${
+              interactedRequests.has(request.id) ? "opacity-60" : ""
+            }`}
           >
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <h3 className="text-xl font-bold text-white">{request.title}</h3>
-                <Badge className="vgen-badge-open">{request.status}</Badge>
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold text-white">{request.title}</h3>
+                    <p className="text-sm text-[#a7b3d4]">{request.description}</p>
+                  </div>
+                  {((request.status || '').toLowerCase().includes('urgent') || (request.tags || []).some((t) => t.toLowerCase() === 'urgent')) && (
+                    <span className="px-3 py-1 rounded-full bg-[#5f2336] text-[#f6c1cd] text-sm border border-[#8a2c46]">
+                      Urgent
+                    </span>
+                  )}
+                </div>
+
+                {request.tags && request.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {request.tags.map((tag: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-full bg-[#151d3a] text-[#c3cef0] text-xs border border-[#27325a]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {request.poster && (
+                  <div className="flex items-center gap-3 text-sm text-[#9aa2c2]">
+                    <User className="size-4" />
+                    <span>Posted by {request.poster?.username}</span>
+                  </div>
+                )}
+
+                {request.sample_image_urls && request.sample_image_urls.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {request.sample_image_urls.slice(0, 3).map((url: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="relative rounded-xl overflow-hidden border border-[#1b2348] hover:border-[#2cc7ff]/40 cursor-pointer transition"
+                        onClick={() => setPreviewImage(url)}
+                      >
+                        <img src={url} alt="" className="w-full h-24 object-cover" />
+                        {idx === 2 && request.sample_image_urls.length > 3 && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-semibold">
+                            +{request.sample_image_urls.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {request.poster && (
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    className="size-12 cursor-pointer"
-                    onClick={() => {
-                      if (!request.poster) return;
-                      setSelectedArtistForSlides?.(null);
-                      setCurrentPage?.("profile");
-                      sessionStorage.setItem("view_profile_user_id", request.poster.id);
-                    }}
-                  >
-                    <AvatarImage src={request.poster?.avatar_url || undefined} />
-                    <AvatarFallback>{request.poster?.display_name?.[0] || "?"}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-white font-semibold">{request.poster?.display_name}</p>
-                    <p className="text-xs text-[#a0a8b8]">@{request.poster?.username}</p>
+
+              <div className="lg:w-64 space-y-4">
+                <div className="p-4 rounded-xl bg-[#0e1533] border border-[#1f2950] space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-11 rounded-lg bg-gradient-to-br from-[#1abc9c] to-[#16a085] flex items-center justify-center">
+                      <DollarSign className="size-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#8ea0c5]">Budget</p>
+                      <p className="text-lg font-semibold text-[#2ce1a9]">${request.budget_min} - ${request.budget_max}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="size-11 rounded-lg bg-gradient-to-br from-[#1f9bf1] to-[#2cc7ff] flex items-center justify-center">
+                      <Clock className="size-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#8ea0c5]">Status</p>
+                      <p className="text-white">{request.status}</p>
+                    </div>
                   </div>
                 </div>
-              )}
-              {request.sample_image_urls && request.sample_image_urls.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
-                  {request.sample_image_urls.slice(0, 2).map((url: string, idx: number) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt=""
-                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
-                      onClick={() => setPreviewImage(url)}
-                    />
-                  ))}
-                </div>
-              )}
-              <p className="text-[#a0a8b8] text-sm line-clamp-3">{request.description}</p>
-              <div className="flex items-center justify-between pt-4 border-t border-[#2a3142]">
-                <div>
-                  <p className="text-xs text-[#a0a8b8]">Budget</p>
-                  <p className="text-white font-semibold">${request.budget_min} - ${request.budget_max}</p>
-                </div>
+
                 <Button
-              className="vgen-button-secondary px-4 text-sm"
-              onClick={() => {
-                setInterestRequest(request);
-                setInterestMessage("");
-              }}
-            >
-              I'm Interested
-            </Button>
-          </div>
-        </div>
+                  className="w-full h-11 rounded-xl bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff] text-white font-semibold shadow-lg shadow-[#2cc7ff]/25 hover:scale-[1.01] transition-transform"
+                  onClick={() => {
+                    setInterestRequest(request);
+                    setInterestMessage("");
+                  }}
+                >
+                  I'm Interested
+                </Button>
+              </div>
+            </div>
           </Card>
         ))}
       </div>
