@@ -3040,7 +3040,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     setSpecialtyInput("");
     await updateProfile({
       art_style_tags: next,
-    });
+    } as any);
   };
 
   const handleRemoveSpecialty = async (tag: string) => {
@@ -3049,7 +3049,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     setSpecialties(next);
     await updateProfile({
       art_style_tags: next,
-    });
+    } as any);
   };
 
   const handleShareProfile = async () => {
@@ -3085,8 +3085,8 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
     setIsUploadingCover(true);
     try {
       const result = await uploadFile.mutateAsync({ file });
-      await updateProfile({ cover_image_url: result.fileUrl });
-      setProfile((prev: any) => ({ ...prev, cover_image_url: result.fileUrl }));
+      await updateProfile({ banner_url: result.fileUrl } as any);
+      setProfile((prev: any) => ({ ...prev, banner_url: result.fileUrl }));
     } finally {
       setIsUploadingCover(false);
       e.target.value = "";
@@ -3131,8 +3131,8 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
       <div
         className="relative rounded-2xl overflow-hidden border border-[#1b2348]"
         style={{
-          backgroundImage: profile?.cover_image_url
-            ? `url(${profile.cover_image_url})`
+          backgroundImage: profile?.banner_url
+            ? `url(${profile.banner_url})`
             : 'linear-gradient(90deg, #9c6bff, #6c7bff, #2cc7ff)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
