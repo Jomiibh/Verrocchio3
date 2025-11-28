@@ -275,7 +275,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(-45deg, #0c1020, #101528, #1a1f2e, #0c1020, #14182a)',
+          background: 'linear-gradient(-45deg, #0F0B1E, #1a1235, #0F0B1E, #11122a, #0F0B1E)',
           backgroundSize: '400% 400%',
           animation: 'gradientShift 30s ease-in-out infinite alternate',
         }}
@@ -289,7 +289,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
           transition: 'transform 0.5s ease-out',
         }}
       >
-        {/* Neon green glow */}
+        {/* Purple/Blue glows */}
         <div
           className="absolute rounded-full"
           style={{
@@ -297,12 +297,12 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '10%',
             width: '500px',
             height: '500px',
-            background: 'radial-gradient(circle, rgba(196, 252, 65, 0.05) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
             filter: 'blur(60px)',
             animation: 'floatOrb1 35s ease-in-out infinite',
           }}
         />
-        {/* Cyan glow */}
+        {/* Cyan-blue glow */}
         <div
           className="absolute rounded-full"
           style={{
@@ -310,12 +310,12 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             right: '15%',
             width: '450px',
             height: '450px',
-            background: 'radial-gradient(circle, rgba(53, 208, 255, 0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%)',
             filter: 'blur(70px)',
             animation: 'floatOrb2 40s ease-in-out infinite',
           }}
         />
-        {/* Soft magenta glow */}
+        {/* Indigo glow */}
         <div
           className="absolute rounded-full"
           style={{
@@ -323,7 +323,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '50%',
             width: '400px',
             height: '400px',
-            background: 'radial-gradient(circle, rgba(184, 107, 255, 0.03) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
             filter: 'blur(80px)',
             animation: 'floatOrb3 45s ease-in-out infinite',
           }}
@@ -336,7 +336,7 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             left: '70%',
             width: '350px',
             height: '350px',
-            background: 'radial-gradient(circle, rgba(100, 200, 255, 0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%)',
             filter: 'blur(65px)',
             animation: 'floatOrb4 38s ease-in-out infinite',
           }}
@@ -348,9 +348,18 @@ function ParallaxBackground({ mousePosition }: { mousePosition: { x: number; y: 
             right: '60%',
             width: '380px',
             height: '380px',
-            background: 'radial-gradient(circle, rgba(196, 252, 65, 0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
             filter: 'blur(75px)',
             animation: 'floatOrb5 42s ease-in-out infinite',
+          }}
+        />
+        {/* Subtle animated ribbon */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(120deg, rgba(139, 92, 246, 0.08), rgba(96, 165, 250, 0.04), rgba(99, 102, 241, 0.08))',
+            mixBlendMode: 'screen',
+            animation: 'drift 26s ease-in-out infinite alternate',
           }}
         />
       </div>
@@ -387,7 +396,7 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
     <aside
       className="fixed left-0 top-0 h-screen w-[280px] border-r border-[#2a3142] flex flex-col z-40"
       style={{
-        backgroundColor: 'rgba(15, 18, 30, 0.85)',
+        backgroundColor: 'rgba(15, 11, 30, 0.85)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
@@ -413,8 +422,8 @@ function LeftSidebar({ currentPage, setCurrentPage, unreadNotifications, unreadM
               className={`
                 w-full flex items-center gap-4 px-4 py-3 rounded-full text-left transition-all duration-150 relative
                 ${isActive
-                  ? 'bg-[#c4fc41]/10 text-white font-semibold border-l-4 border-[#c4fc41] pl-3'
-                  : 'text-[#a0a8b8] hover:bg-[#2a3142] hover:text-white hover:scale-[1.02]'
+                  ? 'bg-[#8B5CF6]/15 text-white font-semibold border-l-4 border-[#8B5CF6] pl-3'
+                  : 'text-[#9CA3AF] hover:bg-[#1f1a33] hover:text-white hover:scale-[1.02]'
                 }
               `}
             >
@@ -651,9 +660,9 @@ function SwipePage({
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-12">
       <div
-        className="max-w-2xl mx-auto mb-8 p-6 rounded-2xl"
-        style={{
-          background: 'rgba(18, 22, 34, 0.75)',
+      className="max-w-2xl mx-auto mb-8 p-6 rounded-2xl"
+      style={{
+          background: 'rgba(18, 15, 34, 0.75)',
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
           border: '1px solid rgba(255, 255, 255, 0.07)',
