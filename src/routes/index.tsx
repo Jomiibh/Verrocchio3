@@ -2758,7 +2758,7 @@ function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void
                 </Badge>
               </div>
               <div className="flex gap-2">
-                {setCurrentPage && addNotification && (
+                {setCurrentPage && (
                   <Button
                     onClick={handleMessageClick}
                     className="vgen-button-primary"
