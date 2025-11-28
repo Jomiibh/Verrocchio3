@@ -375,13 +375,13 @@ function MainContent({
   return (
     <main className="ml-[280px] flex-1 relative z-10">
       {currentPage === "home" && <SwipePage setCurrentPage={setCurrentPage} addNotification={addNotification} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
-      {currentPage === "feed" && <FeedPage setCurrentPage={setCurrentPage} />}
+      {currentPage === "feed" && <FeedPage setCurrentPage={setCurrentPage} addNotification={addNotification} />}
       {currentPage === "discover" && <DiscoverPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
       {currentPage === "requests" && <RequestsPage setCurrentPage={setCurrentPage} setSelectedArtistForSlides={setSelectedArtistForSlides} />}
       {currentPage === "my-requests" && <MyRequestsPage />}
       {currentPage === "messages" && <MessagesPage />}
       {currentPage === "notifications" && <NotificationsPage notifications={notifications} markNotificationRead={markNotificationRead} markAllNotificationsRead={markAllNotificationsRead} setCurrentPage={setCurrentPage} />}
-      {currentPage === "profile" && <ProfilePage setCurrentPage={setCurrentPage} addNotification={addNotification} />}
+      {currentPage === "profile" && <ProfilePage setCurrentPage={setCurrentPage} />}
       {currentPage === "settings" && <SettingsPage />}
       {currentPage === "slides" && selectedArtistForSlides && <SlidesDetailPage artistData={selectedArtistForSlides} setCurrentPage={setCurrentPage} />}
     </main>
@@ -506,20 +506,6 @@ function SwipePage({
     } catch {
       // ignore storage errors
     }
-    setCurrentPage('messages');
-
-    // Add notification
-    const avatarUrl: string | null = currentArtistData.user.avatar_url ?? null;
-    addNotification({
-      type: "message",
-      fromUserId: currentArtistData.user.id,
-      fromUserName: currentArtistData.user.display_name,
-      fromUserAvatar: avatarUrl,
-      message: `Started a conversation with ${currentArtistData.user.display_name}`,
-      linkTo: "messages",
-    });
-
-    // Navigate to messages with this conversation selected
     setCurrentPage('messages');
   };
 
@@ -799,10 +785,68 @@ type FeedPost = TimelinePostModel & { author?: any };
 type SlideMeta = { imageUrl: string; title?: string; priceRange?: string; tags?: string[] };
 type ExtArtist = ArtistProfileModel & { portfolio_slides?: SlideMeta[]; portfolio_image_urls?: string[]; price_range_min?: number; price_range_max?: number };
 
-function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) {
+const LIKES_KEY = "verrocchio_likes_v1";
+const COMMENTS_KEY = "verrocchio_comments_v1";
+
+type StoredComments = Record<string, Array<{ id: string; author: string; text: string; timestamp: number }>>;
+
+function loadLikedPosts(userKey: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(LIKES_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as Record<string, string[]>;
+    return new Set(parsed[userKey] || []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveLikedPosts(userKey: string, liked: Set<string>) {
+  try {
+    const raw = localStorage.getItem(LIKES_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+    parsed[userKey] = Array.from(liked);
+    localStorage.setItem(LIKES_KEY, JSON.stringify(parsed));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function loadComments(): StoredComments {
+  try {
+    const raw = localStorage.getItem(COMMENTS_KEY);
+    return raw ? (JSON.parse(raw) as StoredComments) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveComments(comments: StoredComments) {
+  try {
+    localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function FeedPage({ setCurrentPage, addNotification }: { setCurrentPage: (page: Page) => void; addNotification?: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void }) {
+  const { currentUser } = useUser();
+  const userKey = currentUser?.id ?? "guest";
   const [selectedPost, setSelectedPost] = useState<TimelinePostModel | null>(null);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const queryClient = useQueryClient();
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(() => loadLikedPosts(userKey));
+  const [commentsByPost, setCommentsByPost] = useState<StoredComments>(() => loadComments());
+
+  useEffect(() => {
+    setLikedPosts(loadLikedPosts(userKey));
+  }, [userKey]);
+
+  useEffect(() => {
+    saveLikedPosts(userKey, likedPosts);
+  }, [userKey, likedPosts]);
+
+  useEffect(() => {
+    saveComments(commentsByPost);
+  }, [commentsByPost]);
 
   const { data: posts = [] } = useQuery({
     queryKey: ['timeline-posts'],
@@ -821,20 +865,39 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
     },
   });
 
-  const toggleLike = async (postId: string) => {
-    const isLiked = likedPosts.has(postId);
-    const newLikedPosts = new Set(likedPosts);
+  const handleLike = (post: FeedPost) => {
+    if (likedPosts.has(post.id)) return;
+    const nextLiked = new Set(likedPosts);
+    nextLiked.add(post.id);
+    setLikedPosts(nextLiked);
 
-    if (isLiked) {
-      newLikedPosts.delete(postId);
-    } else {
-      newLikedPosts.add(postId);
+    if (addNotification && currentUser && post.author_id && post.author_id !== currentUser.id) {
+      const authorName = post.author?.display_name || post.author?.username || "Artist";
+      addNotification({
+        type: "like",
+        fromUserId: currentUser.id,
+        fromUserName: currentUser.display_name,
+        fromUserAvatar: currentUser.avatar_url || null,
+        message: `${currentUser.display_name} liked ${authorName}'s post`,
+        linkTo: "notifications",
+      });
     }
+  };
 
-    setLikedPosts(newLikedPosts);
-
-    // Optimistic update only; backend like endpoint not implemented
-    queryClient.invalidateQueries({ queryKey: ['timeline-posts'] });
+  const handleAddComment = (postId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const entry = {
+      id: `${Date.now()}`,
+      author: currentUser?.display_name || "You",
+      text: trimmed,
+      timestamp: Date.now(),
+    };
+    setCommentsByPost((prev) => {
+      const next: StoredComments = { ...prev };
+      next[postId] = [...(next[postId] || []), entry];
+      return next;
+    });
   };
 
   return (
@@ -845,11 +908,14 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
       <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
         {posts.map((post: FeedPost) => (
           <div key={post.id} className="break-inside-avoid">
+            {/** derive likes/comments per post */}
             <FeedTile
               post={post}
               onClick={() => setSelectedPost(post)}
-              onLike={() => toggleLike(post.id)}
+              onLike={() => handleLike(post)}
               isLiked={likedPosts.has(post.id)}
+              likeCount={(post.likes_count || 0) + (likedPosts.has(post.id) ? 1 : 0)}
+              commentCount={(commentsByPost[post.id] || []).length}
               setCurrentPage={setCurrentPage}
             />
           </div>
@@ -862,8 +928,11 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
           relatedPosts={posts.filter((p: TimelinePostModel) => p.id !== selectedPost.id).slice(0, 6)}
-          onLike={() => toggleLike(selectedPost.id)}
+          onLike={() => handleLike(selectedPost as FeedPost)}
           isLiked={likedPosts.has(selectedPost.id)}
+          likeCount={(selectedPost.likes_count || 0) + (likedPosts.has(selectedPost.id) ? 1 : 0)}
+          comments={commentsByPost[selectedPost.id] || []}
+          onAddComment={(text) => handleAddComment(selectedPost.id, text)}
           setCurrentPage={setCurrentPage}
         />
       )}
@@ -871,7 +940,23 @@ function FeedPage({ setCurrentPage }: { setCurrentPage: (page: Page) => void }) 
   );
 }
 
-function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: FeedPost; onClick: () => void; onLike: () => void; isLiked: boolean; setCurrentPage: (page: Page) => void }) {
+function FeedTile({
+  post,
+  onClick,
+  onLike,
+  isLiked,
+  likeCount,
+  commentCount,
+  setCurrentPage,
+}: {
+  post: FeedPost;
+  onClick: () => void;
+  onLike: () => void;
+  isLiked: boolean;
+  likeCount: number;
+  commentCount: number;
+  setCurrentPage: (page: Page) => void;
+}) {
   const [height, setHeight] = useState(20);
   const author = post.author || null;
 
@@ -918,16 +1003,23 @@ function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: Fe
                 <span className="text-white text-sm font-semibold">{authorDisplay}</span>
               </div>
               <p className="text-white text-sm line-clamp-2 mb-2">{post.body}</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLike();
-                }}
-                className="flex items-center gap-1 text-white hover:text-[#c4fc41] transition"
-              >
-                <Heart className={`size-4 ${isLiked ? 'fill-[#c4fc41] text-[#c4fc41]' : ''}`} />
-                <span className="text-xs">{post.likes_count}</span>
-              </button>
+              <div className="flex items-center gap-4 text-white">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isLiked) onLike();
+                  }}
+                  className={`flex items-center gap-1 ${isLiked ? 'text-[#c4fc41]' : 'hover:text-[#c4fc41]'}`}
+                  disabled={isLiked}
+                >
+                  <Heart className={`size-4 ${isLiked ? 'fill-[#c4fc41]' : ''}`} />
+                  <span className="text-xs">{likeCount}</span>
+                </button>
+                <div className="flex items-center gap-1 text-xs text-[#a0a8b8]">
+                  <MessageCircle className="size-4" />
+                  <span>{commentCount}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -944,28 +1036,37 @@ function FeedTile({ post, onClick, onLike, isLiked, setCurrentPage }: { post: Fe
             <span className="text-white text-sm font-semibold">{authorDisplay}</span>
           </div>
           <p className="text-white text-sm line-clamp-4 mb-2">{post.body}</p>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onLike();
-            }}
-            className="flex items-center gap-1 text-[#a0a8b8] hover:text-[#c4fc41] transition"
-          >
-            <Heart className={`size-4 ${isLiked ? 'fill-[#c4fc41] text-[#c4fc41]' : ''}`} />
-            <span className="text-xs">{post.likes_count}</span>
-          </button>
+          <div className="flex items-center gap-4 text-[#a0a8b8]">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isLiked) onLike();
+              }}
+              className={`flex items-center gap-1 ${isLiked ? 'text-[#c4fc41]' : 'hover:text-[#c4fc41]'}`}
+              disabled={isLiked}
+            >
+              <Heart className={`size-4 ${isLiked ? 'fill-[#c4fc41] text-[#c4fc41]' : ''}`} />
+              <span className="text-xs text-white">{likeCount}</span>
+            </button>
+            <div className="flex items-center gap-1 text-xs">
+              <MessageCircle className="size-4" />
+              <span>{commentCount}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
-
 function PostDetailModal({
   post,
   onClose,
   relatedPosts,
   onLike,
   isLiked,
+  likeCount,
+  comments,
+  onAddComment,
   setCurrentPage
 }: {
   post: TimelinePostModel;
@@ -973,10 +1074,14 @@ function PostDetailModal({
   relatedPosts: TimelinePostModel[];
   onLike: () => void;
   isLiked: boolean;
+  likeCount: number;
+  comments: Array<{ id: string; author: string; text: string; timestamp: number }>;
+  onAddComment: (text: string) => void;
   setCurrentPage: (page: Page) => void;
 }) {
   const author = (post as any).author || null;
   if (!author) return null;
+  const [commentText, setCommentText] = useState("");
 
   const handleProfileClick = () => {
     // Navigate to profile page - in this case it's the author's profile
@@ -1034,14 +1139,62 @@ function PostDetailModal({
             )}
 
             <div className="flex items-center gap-6 text-[#a0a8b8] pt-6 border-t border-[#2a3142]">
-              <button onClick={onLike} className={`flex items-center gap-2 transition ${isLiked ? 'text-[#c4fc41]' : 'hover:text-[#c4fc41]'}`}>
+              <button
+                onClick={() => {
+                  if (!isLiked) onLike();
+                }}
+                disabled={isLiked}
+                className={`flex items-center gap-2 transition ${isLiked ? 'text-[#c4fc41]' : 'hover:text-[#c4fc41]'}`}
+              >
                 <Heart className={`size-5 ${isLiked ? 'fill-[#c4fc41]' : ''}`} />
-                <span className="text-sm">{post.likes_count}</span>
+                <span className="text-sm">{likeCount}</span>
               </button>
-              <button className="flex items-center gap-2 hover:text-[#c4fc41] transition">
+              <div className="flex items-center gap-2 hover:text-[#c4fc41] transition">
                 <MessageCircle className="size-5" />
-                <span className="text-sm">Reply</span>
-              </button>
+                <span className="text-sm">{comments.length} {comments.length === 1 ? "Reply" : "Replies"}</span>
+              </div>
+            </div>
+
+            {/* Comments */}
+            <div className="mt-4 space-y-3">
+              {comments.length === 0 ? (
+                <p className="text-sm text-[#a0a8b8]">No replies yet. Be the first!</p>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="flex flex-col gap-1 border border-[#2a3142] rounded-lg p-3">
+                    <div className="flex items-center justify-between text-xs text-[#a0a8b8]">
+                      <span className="font-semibold text-white">{c.author}</span>
+                      <span>{new Date(c.timestamp).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-white">{c.text}</p>
+                  </div>
+                ))
+              )}
+
+              <div className="flex gap-2">
+                <Input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Write a reply..."
+                  className="flex-1 bg-[#242b3d] border-[#2a3142] text-white"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onAddComment(commentText);
+                      setCommentText("");
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => {
+                    onAddComment(commentText);
+                    setCommentText("");
+                  }}
+                  disabled={!commentText.trim()}
+                  className="vgen-button-primary"
+                >
+                  Reply
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -2534,27 +2687,13 @@ function RequestsPage({
   );
 }
 
-function ProfilePage({ setCurrentPage, addNotification }: { setCurrentPage?: (page: Page) => void; addNotification?: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void }) {
+function ProfilePage({ setCurrentPage }: { setCurrentPage?: (page: Page) => void }) {
   const { currentUser } = useUser();
   const [profile, setProfile] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleMessageClick = async () => {
-    if (!currentUser || !setCurrentPage || !addNotification) return;
-
-    // Create or find conversation with this user (for demo, we'll show the message page)
-    // In a real app, you'd create a conversation with the viewed profile user
-    // For now, just navigate to messages with a notification
-    const avatarUrl: string | null = currentUser.avatar_url ?? null;
-    addNotification({
-      type: "message",
-      fromUserId: currentUser.id,
-      fromUserName: currentUser.display_name,
-      fromUserAvatar: avatarUrl,
-      message: `Opening messages...`,
-      linkTo: "messages",
-    });
-
+    if (!currentUser || !setCurrentPage) return;
     setCurrentPage('messages');
   };
 
