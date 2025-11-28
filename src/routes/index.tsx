@@ -15,7 +15,7 @@ import {
   Mail, User, Lock, Eye, EyeOff, Twitter, Instagram, Globe, ExternalLink,
   Home, Grid3x3, Compass, Briefcase, UserCircle, Settings, Plus, X,
   Heart, FileImage, FileText, Edit3, Sparkles, Search, Image as ImageIcon, Crop, Bell, Trash2, Calendar, DollarSign,
-  Clock, ArrowLeft, ArrowRight
+  Clock, Paperclip, Smile, ArrowLeft, ArrowRight
 } from "lucide-react";
 import { UserRole, type UserModel } from "@/components/data/orm/orm_user";
 import { type TimelinePostModel } from "@/components/data/orm/orm_timeline_post";
@@ -3200,6 +3200,15 @@ function MessagesPage({ goToUserProfile }: { goToUserProfile: (user: UserModel |
   const SAVED_CONV_KEY = "selected_conversation_id";
   const SAVED_USER_KEY = "selected_conversation_user";
 
+  const formatTime = (ts: number) => {
+    const date = new Date(ts);
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
   const selectConversation = (conv: Conversation) => {
     const convId = conv.conversationId || conv.userId;
     setSelectedConversation(convId);
@@ -3338,58 +3347,84 @@ function MessagesPage({ goToUserProfile }: { goToUserProfile: (user: UserModel |
   }
 
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex bg-[#0c1026]">
       {/* Conversations list */}
-      <div className="w-80 border-r border-[#2a3142] bg-[#151827] flex flex-col">
-        <div className="p-4 border-b border-[#2a3142]">
-          <h2 className="text-xl font-bold text-white">Messages</h2>
+      <div className="w-[320px] border-r border-[#1b2348] bg-gradient-to-b from-[#0f132a] to-[#0c1026] flex flex-col">
+        <div className="p-4 border-b border-[#1b2348]">
+          <h2 className="text-xl font-semibold text-white mb-3">Messages</h2>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6b7292]" />
+            <Input
+              placeholder="Search messages..."
+              className="pl-10 pr-3 h-10 bg-[#111735] border-[#1b2348] text-white rounded-xl focus-visible:ring-0 focus-visible:border-[#2cc7ff]"
+            />
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conv: Conversation) => (
-            <button
-              key={conv.conversationId || conv.userId}
-              onClick={() => {
-                selectConversation(conv);
-              }}
-              className={`
-                w-full p-4 flex items-center gap-3 border-b border-[#2a3142] transition-colors
-                ${selectedConversation === (conv.conversationId || conv.userId) ? 'bg-[#1e2433]' : 'hover:bg-[#1a1f2e]'}
-              `}
-            >
-              <Avatar
-                className="size-12"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goToUserProfile({
-                    id: conv.userId,
-                    display_name: conv.userName,
-                    username: conv.userName,
-                    avatar_url: conv.userAvatar,
-                    role: null,
-                  });
+          {conversations.map((conv: Conversation) => {
+            const isActive = selectedConversation === (conv.conversationId || conv.userId);
+            const unread = conv.unreadCount || 0;
+            return (
+              <button
+                key={conv.conversationId || conv.userId}
+                onClick={() => {
+                  selectConversation(conv);
                 }}
+                className={`
+                  w-full px-4 py-3 flex items-center gap-3 border-b border-[#0f142c] transition-all
+                  ${isActive ? 'bg-[#121935] shadow-inner border-[#1f2950]' : 'hover:bg-[#0f142c]'}
+                `}
               >
-                <AvatarImage src={conv.userAvatar || undefined} />
-                <AvatarFallback>{conv.userName[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 text-left">
-                <p className="text-white font-semibold">{conv.userName}</p>
-                <p className="text-sm text-[#a0a8b8] truncate">{conv.lastMessage}</p>
-              </div>
-            </button>
-          ))}
+                <div className="relative">
+                  <Avatar
+                    className="size-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToUserProfile({
+                        id: conv.userId,
+                        display_name: conv.userName,
+                        username: conv.userName,
+                        avatar_url: conv.userAvatar,
+                        role: null,
+                      });
+                    }}
+                  >
+                    <AvatarImage src={conv.userAvatar || undefined} />
+                    <AvatarFallback className="bg-gradient-to-br from-[#9c6bff] to-[#2cc7ff] text-white">
+                      {conv.userName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute -bottom-1 -right-1 size-2.5 rounded-full bg-[#21d47a] ring-2 ring-[#0c1026]" />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-white truncate">{conv.userName}</p>
+                    <span className="text-[11px] text-[#7c83a8] whitespace-nowrap">
+                      {formatTime(conv.timestamp)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#9aa2c2] truncate">{conv.lastMessage}</p>
+                </div>
+                {unread > 0 && (
+                  <div className="size-6 rounded-full bg-[#2a3055] text-[#c7d2ff] text-[11px] flex items-center justify-center">
+                    {unread > 9 ? '9+' : unread}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Active chat */}
-      <div className="flex-1 flex flex-col bg-[#1a1f2e]">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-[#0f132a] via-[#0c1026] to-[#0b0f24]">
         {selectedConversation ? (
           <>
             {/* Chat header */}
-            <div className="p-4 border-b border-[#2a3142] bg-[#151827]">
+            <div className="px-6 py-4 border-b border-[#141a36] bg-[#0f132a]/80 backdrop-blur">
               <div className="flex items-center gap-3">
                 <Avatar
-                  className="size-10"
+                  className="size-12"
                   onClick={() => {
                     if (!selectedUser) return;
                     goToUserProfile({
@@ -3402,32 +3437,37 @@ function MessagesPage({ goToUserProfile }: { goToUserProfile: (user: UserModel |
                   }}
                 >
                   <AvatarImage src={selectedUser?.userAvatar || undefined} />
-                  <AvatarFallback>{selectedUser?.userName?.[0]}</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-[#9c6bff] to-[#2cc7ff] text-white">
+                    {selectedUser?.userName?.[0]}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-white font-semibold">{selectedUser?.userName}</p>
-                  <p className="text-xs text-[#a0a8b8]">Active now</p>
+                  <p className="text-white font-semibold text-lg">{selectedUser?.userName}</p>
+                  <p className="text-xs text-[#7ad7a0]">Online</p>
                 </div>
               </div>
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
               {localMessages
                 .map((message: Message) => {
                   const isSent = message.senderId === currentUser.id;
                   return (
                     <div key={message.id} className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-md flex gap-2 ${isSent ? 'flex-row-reverse' : 'flex-row'}`}>
-                        <Avatar className="size-8">
-                          <AvatarImage src={isSent ? currentUser.avatar_url || undefined : undefined} />
-                          <AvatarFallback className="text-xs">
-                            {isSent ? currentUser.display_name[0] : selectedUser?.userName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className={`px-4 py-2 rounded-2xl ${isSent ? 'bg-[#c4fc41] text-[#1a1f2e]' : 'bg-[#1e2433] text-white'}`}>
-                          <p className="text-sm">{message.content}</p>
+                      <div className="max-w-xl space-y-1">
+                        <div
+                          className={`inline-block px-4 py-3 rounded-2xl text-sm shadow-sm ${
+                            isSent
+                              ? 'bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff] text-white'
+                              : 'bg-[#121935] text-[#d5defa] border border-[#1b2348]'
+                          }`}
+                        >
+                          {message.content}
                         </div>
+                        <p className="text-[11px] text-[#6b7292] px-2">
+                          {formatTime(message.timestamp)}
+                        </p>
                       </div>
                     </div>
                   );
@@ -3435,20 +3475,24 @@ function MessagesPage({ goToUserProfile }: { goToUserProfile: (user: UserModel |
             </div>
 
             {/* Message input */}
-            <div className="p-4 border-t border-[#2a3142] bg-[#151827]">
-              <div className="flex items-center gap-2">
-                <Input
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-[#1e2433] border-[#2a3142] text-white rounded-full"
-                />
+            <div className="px-6 py-4 border-t border-[#141a36] bg-[#0f132a]/80 backdrop-blur">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#111735] border border-[#1b2348]">
+                  <Paperclip className="size-4 text-[#6b7292]" />
+                  <Input
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent border-none text-white focus-visible:ring-0 focus-visible:border-none"
+                  />
+                  <Smile className="size-4 text-[#6b7292]" />
+                </div>
                 <Button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
                   size="icon"
-                  className="rounded-full vgen-button-primary"
+                  className="rounded-full bg-gradient-to-r from-[#9c6bff] via-[#6c7bff] to-[#2cc7ff] text-white border-none shadow-lg shadow-[#2cc7ff]/30"
                 >
                   <Send className="size-4" />
                 </Button>
